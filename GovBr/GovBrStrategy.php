@@ -1,5 +1,4 @@
 <?php
-require 'vendor/autoload.php';
 
 use Curl\Curl;
 use MapasCulturais\App;
