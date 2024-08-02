@@ -26,7 +26,10 @@ class GovBrStrategy extends OpauthStrategy
 	 */
 	public function request()
 	{
+		$app = App::i();
+
 		$_SESSION['govbr-state'] = md5($this->strategy['state_salt'].time());
+		$_SESSION['govbr-nonce'] = md5($this->strategy['nonce'].time());
 
 		$url = $this->strategy['auth_endpoint'];
 		$params = array(
@@ -34,6 +37,7 @@ class GovBrStrategy extends OpauthStrategy
 			'redirect_uri' => $this->strategy['redirect_uri'],
 			'response_type' => 'code',
 			'scope' => $this->strategy['scope'],
+			'nonce' => $_SESSION['govbr-nonce'],
 			'state' => $_SESSION['govbr-state'],
 			'code_challenge' => $this->strategy['code_challenge'],
 			'code_challenge_method' => $this->strategy['code_challenge_method'],
@@ -42,6 +46,14 @@ class GovBrStrategy extends OpauthStrategy
 		foreach ($this->optionals as $key) {
 			if (!empty($this->strategy[$key])) $params[$key] = $this->strategy[$key];
 		}
+		
+		// imprime URL de requisicao - Passo 3 - https://acesso.gov.br/roteiro-tecnico/iniciarintegracao.html
+		if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+			$app->log->debug("===================\n".
+							__METHOD__.
+							"\n" . print_r($url . '?' . http_build_query($params), true) .
+							"\n=================");
+        	}
 
 		$this->clientGet($url, $params);
 	}
@@ -69,12 +81,38 @@ class GovBrStrategy extends OpauthStrategy
 			$curl = new Curl;
 			$curl->setHeader('Content-Type', 'application/x-www-form-urlencoded');
 			$curl->setHeader('Authorization', "Basic {$token}");
+			
+			// imprime URL de requisicao para conferencia do POST - Passo 6 - https://acesso.gov.br/roteiro-tecnico/iniciarintegracao.html
+			$app = App::i();
+			if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+				$app->log->debug("===================\n".
+								__METHOD__.
+						 		"\n" . print_r($url . '?' . http_build_query($params), true) .
+								"\n=================");
+			}
 
 			$curl->post($url, $params);
 			$curl->close();
 			$response = $curl->response;
 
-			$results = json_decode($response);
+			// imprime response do post - Passo 6
+			if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+				$app->log->debug("===================\n".
+						 		__METHOD__.
+								"\nResponse: " . print_r($response, true) .
+								"\n=================");
+			}
+
+			$responseBody = json_encode($response);
+			$jsonResponse = json_decode($responseBody);
+
+			if (json_last_error() !== JSON_ERROR_NONE) {
+			    // Trate o erro de JSON
+			    throw new \Exception('Erro ao decodificar JSON: ' . json_last_error_msg());
+			}
+
+			$results = $jsonResponse;
+			//$results = json_decode($response);
 
 			if (!empty($results) && !empty($results->id_token)) {
 
