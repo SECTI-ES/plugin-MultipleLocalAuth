@@ -66,9 +66,12 @@ $this->import('
                     <div class="create ">
                         <h5 class="bold"> <?= sprintf($this->text('register', i::__('Ainda não tem cadastro no %s? Realize seu cadastro agora!')), $app->siteName) ?> </h5>
 
-                        <a class=" button button--primary button--large button--md" href="<?php echo $app->createUrl('auth', 'register') ?>"> 
-                            <?= $this->text('fazer-cadastro', i::__('Fazer cadastro')) ?>
-                        </a>
+			<?php if (getenv('LOCAL_USER_REGISTER') !== 'false'): ?>
+                        	<a class=" button button--primary button--large button--md" href="<?php echo $app->createUrl('auth', 'register') ?>"> 
+                            	<?= $this->text('fazer-cadastro', i::__('Fazer cadastro')) ?>
+                        	</a> 
+			<?php endif; ?>
+
                     </div>
                 </form>
             </div>

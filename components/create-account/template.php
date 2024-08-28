@@ -33,7 +33,9 @@ $this->import('
 
             <!-- First step -->
             <div v-if="step==0" class="create-account__step grid-12">
-                <form class="col-12 grid-12" @submit.prevent="nextStep();">
+		
+		<?php if (getenv('LOCAL_USER_REGISTER') !== 'false'): ?>
+		<form class="col-12 grid-12" @submit.prevent="nextStep();">
                     <div class="field col-12">
                         <label for="email"> <?= i::__('E-mail') ?> </label>
                         <input type="text" name="email" id="email" v-model="email" />
@@ -70,7 +72,8 @@ $this->import('
                     <VueRecaptcha v-if="configs['google-recaptcha-sitekey']" :sitekey="configs['google-recaptcha-sitekey']" @verify="verifyCaptcha" @expired="expiredCaptcha" class="g-recaptcha col-12"></VueRecaptcha>
                     <button class="col-12 button button--primary button--large button--md" type="submit"> <?= i::__('Continuar') ?> </button>
                 </form>
-                
+		<?php endif; ?>
+
                 <div v-if="configs.strategies.Google?.visible || configs.strategies.govbr?.visible" class="divider col-12"></div>
 
                 <div v-if="configs.strategies.Google?.visible || configs.strategies.govbr?.visible" class="social-login col-12">
