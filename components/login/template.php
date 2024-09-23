@@ -26,6 +26,8 @@ $this->import('
 
             <div class="login__card__content">
                 <form class="login__form" @submit.prevent="doLogin();">
+
+                    <?php if (getenv('LOCAL_USER_REGISTER') !== 'false'): ?>
                     <div class="login__fields">
                         <div class="field">
                             <label for="email"> <?= i::__('E-mail ou CPF') ?> </label>
@@ -41,13 +43,17 @@ $this->import('
                     </div>                     
 
                     <VueRecaptcha v-if="configs['google-recaptcha-sitekey']" :sitekey="configs['google-recaptcha-sitekey']" @verify="verifyCaptcha" @expired="expiredCaptcha" @render="expiredCaptcha" class="g-recaptcha"></VueRecaptcha>
+                    <?php endif; ?>
                     
                     <div class="login__buttons">
+
+			<?php if (getenv('LOCAL_USER_REGISTER') !== 'false'): ?>
                         <button class=" button button--primary button--large button--md" type="submit"> <?= i::__('Entrar') ?> </button>
 
                         <div v-if="configs.strategies.Google?.visible || configs.strategies.govbr?.visible" class="divider"> 
                             <span class="divider__text"> <?= i::__('Ou entre com') ?> </span>
                         </div>
+			<?php endif; ?>
 
                         <div class="login__social-buttons" :class="{'login__social-buttons--multiple': multiple}">
                             <a v-if="configs.strategies.govbr?.visible" class="social-login--button button button--icon button--large button--md govbr" href="<?php echo $app->createUrl('auth', 'govbr') ?>">                                
