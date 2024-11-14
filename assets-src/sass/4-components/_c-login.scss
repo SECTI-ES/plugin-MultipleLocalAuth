@@ -88,9 +88,15 @@
                     border: var(--mc-border-hairline) #1351B4;
                     color: var(--mc-high-500);
                 }
-    
+
+                &.acessocidadaoes {
+                    border: var(--mc-border-hairline) #1351B4;
+                    background-color: #1351B4;
+                    color: #FFFFFF; /* Cor do texto */
+                }
+
                 @media (max-width: 380px) {
-                    &.google, &.govbr {
+                    &.google, &.govbr, &.acessocidadaoes {
                         font-size: 13px;
                     }
                 }
