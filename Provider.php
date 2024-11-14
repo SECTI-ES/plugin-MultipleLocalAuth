@@ -107,8 +107,27 @@ class Provider extends \MapasCulturais\AuthProvider {
                     'userinfo_endpoint' => env('AUTH_GOV_BR_USERINFO_ENDPOINT', null),
                     'state_salt' => env('AUTH_GOV_BR_STATE_SALT', null),
                     'applySealId' => env('AUTH_GOV_BR_APPLY_SEAL_ID', null),
-                    'menssagem_authenticated' => env('AUTH_GOV_BR_MENSSAGEM_AUTHENTICATED','Usuário já se autenticou pelo GovBr'),
+                    'menssagem_authenticated' => env('AUTH_GOV_BR_MENSSAGEM_AUTHENTICATED','Usuario ja se autenticou pelo GovBr'),
                     'dic_agent_fields_update' => env('AUTH_GOV_BR_DICT_AGENT_FIELDS_UPDATE','[]')
+                ],
+                'AcessoCidadaoES' => [
+                    'visible' => env('AUTH_ACESSO_CIDADAO_ES_ID', false),
+                    'response_type' => env('AUTH_ACESSO_CIDADAO_ES_RESPONSE_TYPE', 'code'),
+                    'client_id' => env('AUTH_ACESSO_CIDADAO_ES_CLIENT_ID', null),
+                    'client_secret' => env('AUTH_ACESSO_CIDADAO_ES_SECRET', null),
+                    'scope' => env('AUTH_ACESSO_CIDADAO_ES_SCOPE', null),
+                    'redirect_uri' => env('AUTH_ACESSO_CIDADAO_ES_REDIRECT_URI', null), 
+                    'auth_endpoint' => env('AUTH_ACESSO_CIDADAO_ES_ENDPOINT', null),
+                    'token_endpoint' => env('AUTH_ACESSO_CIDADAO_ES_TOKEN_ENDPOINT', null),
+                    'nonce' => env('AUTH_ACESSO_CIDADAO_ES_NONCE', null),
+                    'code_verifier' => env('AUTH_ACESSO_CIDADAO_ES_CODE_VERIFIER', null),
+                    'code_challenge' => env('AUTH_ACESSO_CIDADAO_ES_CHALLENGE', null),
+                    'code_challenge_method' => env('AUTH_ACESSO_CIDADAO_ES_CHALLENGE_METHOD', null),
+                    'userinfo_endpoint' => env('AUTH_ACESSO_CIDADAO_ES_USERINFO_ENDPOINT', null),
+                    'state_salt' => env('AUTH_ACESSO_CIDADAO_ES_STATE_SALT', null),
+                    'applySealId' => env('AUTH_ACESSO_CIDADAO_ES_APPLY_SEAL_ID', null),
+                    'menssagem_authenticated' => env('AUTH_ACESSO_CIDADAO_ES_MENSSAGEM_AUTHENTICATED','Usuario ja se autenticou pelo Acesso Cidadao ES'),
+                    'dic_agent_fields_update' => env('AUTH_ACESSO_CIDADAO_ES_DICT_AGENT_FIELDS_UPDATE','[]')
                 ]
             ]
         ];
