@@ -74,9 +74,9 @@ $this->import('
                 </form>
 		<?php endif; ?>
 
-                <div v-if="configs.strategies.Google?.visible || configs.strategies.govbr?.visible" class="divider col-12"></div>
+                <div v-if="configs.strategies.Google?.visible || configs.strategies.govbr?.visible || configs.strategies.AcessoCidadaoES?.visible" class="divider col-12"></div>
 
-                <div v-if="configs.strategies.Google?.visible || configs.strategies.govbr?.visible" class="social-login col-12">
+                <div v-if="configs.strategies.Google?.visible || configs.strategies.govbr?.visible || configs.strategies.AcessoCidadaoES?.visible" class="social-login col-12">
                     <a v-if="configs.strategies.govbr?.visible" class="social-login--button button button--icon button--large button--md govbr" href="<?php echo $app->createUrl('auth', 'govbr') ?>">                                
                         <div class="img"> <img height="16" class="br-sign-in-img" src="<?php $this->asset('img/govbr-white.png'); ?>" /> </div>                                
                         <?= i::__('Entrar com Gov.br') ?>                            
@@ -84,6 +84,10 @@ $this->import('
                     <a v-if="configs.strategies.Google?.visible" class="social-login--button button button--icon button--large button--md google" href="<?php echo $app->createUrl('auth', 'google') ?>">                                
                         <div class="img"> <img height="16" src="<?php $this->asset('img/g.png'); ?>" /> </div>                                
                         <?= i::__('Entrar com Google') ?>
+                    </a>
+                    <a v-if="configs.strategies.AcessoCidadaoES?.visible" class="social-login--button button button--icon button--large button--md acessocidadaoes" href="<?php echo $app->createUrl('auth', 'AcessoCidadaoES') ?>">
+                        <?php /*  <div class="img"> <img height="16" src="<?php $this->asset('img/acessocidadaoes.png'); ?>" /> </div> */ ?>
+                        <?= i::__('Entrar com Acesso Cidadão ES') ?>
                     </a>
                 </div>
             </div>

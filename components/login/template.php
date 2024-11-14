@@ -50,7 +50,7 @@ $this->import('
 			<?php if (getenv('LOCAL_USER_REGISTER') !== 'false'): ?>
                         <button class=" button button--primary button--large button--md" type="submit"> <?= i::__('Entrar') ?> </button>
 
-                        <div v-if="configs.strategies.Google?.visible || configs.strategies.govbr?.visible" class="divider"> 
+                        <div v-if="configs.strategies.Google?.visible || configs.strategies.govbr?.visible || configs.strategies.AcessoCidadaoES?.visible" class="divider"> 
                             <span class="divider__text"> <?= i::__('Ou entre com') ?> </span>
                         </div>
 			<?php endif; ?>
@@ -64,6 +64,11 @@ $this->import('
                             <a v-if="configs.strategies.Google?.visible" class="social-login--button button button--icon button--large button--md google" href="<?php echo $app->createUrl('auth', 'google') ?>">                                
                                 <div class="img"> <img height="16" src="<?php $this->asset('img/g.png'); ?>" /> </div>                                
                                 <?= i::__('Entrar com Google') ?>
+                            </a>
+
+                            <a v-if="configs.strategies.AcessoCidadaoES?.visible" class="social-login--button button button--icon button--large button--md acessocidadaoes" href="<?php echo $app->createUrl('auth', 'AcessoCidadaoES') ?>">
+                                <?php /*  <div class="img"> <img height="16" src="<?php $this->asset('img/acessocidadaoes.png'); ?>" /> </div> */ ?>
+                                <?= i::__('Entrar com Acesso Cidadão ES') ?>
                             </a>
 
                         </div>

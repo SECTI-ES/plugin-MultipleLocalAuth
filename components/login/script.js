@@ -47,7 +47,14 @@ app.component('login', {
         },
 
         multiple() {
-            return this.configs.strategies.Google?.visible && this.configs.strategies.govbr?.visible;
+            const strategies = [
+                this.configs.strategies.Google?.visible,
+                this.configs.strategies.govbr?.visible,
+                this.configs.strategies.AcessoCidadaoES?.visible
+            ];
+        
+            // Filtra as estratégias visíveis e verifica se pelo menos duas estão ativas
+            return strategies.filter(visible => visible).length > 1;
         }
     },
 
