@@ -69,6 +69,21 @@ $app->view->enqueueStyle('app', 'multipleLocal-govbr', 'css/govbr.css');
                     <?php endif ?>
                 <?php endif ?>
             </div>
+            <div>
+                <?php if($config['strategies']['AcessoCidadaoES']['visible']): ?>
+                    <?php if($has_seal_AcessoCidadaoES):?> 
+                        <div class="gov-br-auth">
+                            <img src="<?=$this->asset("img/govbr-auth.png", false)?>">
+                        </div>
+                    <?php else:?>
+                        <div class="gov-br-sign-in">
+                            <a href="http://localhost/autenticacao/AcessoCidadaoES/" style="background-color: #eee;color: black;">
+                                <span><?php \MapasCulturais\i::esc_attr_e('Vincular conta com Acesso Cidadão ES', 'multipleLocal'); ?></span>
+                            </a>
+                        </div>
+                    <?php endif ?>
+                <?php endif ?>
+            </div>
         </div>
     </form>
     <br>
