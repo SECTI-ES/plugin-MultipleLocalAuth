@@ -66,7 +66,7 @@ $this->import('
                                 <?= i::__('Entrar com Google') ?>
                             </a>
 
-                            <a v-if="configs.strategies.AcessoCidadaoES?.visible" class="social-login--button button button--icon button--large button--md acessocidadaoes" href="<?php echo $app->createUrl('auth', 'AcessoCidadaoES') ?>">
+                            <a v-if="configs.strategies.AcessoCidadaoES?.visible" class="social-login--button button button--icon button--large button--md acessocidadaoes" href="<?php echo $app->createUrl('auth', 'acessocidadaoes') ?>">
                                 <?php /*  <div class="img"> <img height="16" src="<?php $this->asset('img/acessocidadaoes.png'); ?>" /> </div> */ ?>
                                 <?= i::__('Entrar com Acesso Cidadão ES') ?>
                             </a>

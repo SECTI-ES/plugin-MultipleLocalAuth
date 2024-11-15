@@ -77,7 +77,7 @@ $app->view->enqueueStyle('app', 'multipleLocal-govbr', 'css/govbr.css');
                         </div>
                     <?php else:?>
                         <div class="gov-br-sign-in">
-                            <a href="http://localhost/autenticacao/AcessoCidadaoES/" style="background-color: #eee;color: black;">
+                            <a href="http://localhost/autenticacao/acessocidadaoes/" style="background-color: #eee;color: black;">
                                 <span><?php \MapasCulturais\i::esc_attr_e('Vincular conta com Acesso Cidadão ES', 'multipleLocal'); ?></span>
                             </a>
                         </div>
