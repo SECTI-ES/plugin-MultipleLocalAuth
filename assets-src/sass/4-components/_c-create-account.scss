@@ -143,10 +143,10 @@
         }
 
         .social-login {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        align-items: center;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
 
             &--button {
                 text-align: center;
@@ -193,8 +193,9 @@
                     &.govbr,
                     &.acessocidadaoes {
                         font-size: 13px;
-                }
-            }   
+                    }
+                }   
+            }
         }
 
         .term {
