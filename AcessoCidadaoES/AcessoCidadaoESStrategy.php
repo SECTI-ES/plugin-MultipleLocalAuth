@@ -80,7 +80,8 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 				 "\n=================");
 		}
 
-		if ((array_key_exists('code', $_POST) && !empty($_POST['code'])) && (array_key_exists("state", $_POST) && $_POST['state'] == $_SESSION['AcessoCidadaoES-state'])) {
+		//if ((array_key_exists('code', $_POST) && !empty($_POST['code'])) && (array_key_exists("state", $_POST) && $_POST['state'] == $_SESSION['AcessoCidadaoES-state'])) {
+		if ((array_key_exists('code', $_POST) && !empty($_POST['code']))) {
 			
 			$code = $_POST['code'];
 		
@@ -116,7 +117,8 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 									 "\n=================");
 			}
 
-			$results = json_decode($response);
+			//$results = json_decode($response);
+			$results=$response;
 
 			if (!empty($results) && !empty($results->id_token) && !empty($results->access_token)) {
 
@@ -125,6 +127,19 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 				$userinfo->access_token =  $results->access_token;
 				//$userinfo->cpf =  $userinfo->sub;
 				//$exp_name = explode(" ", $userinfo->name);
+				
+				// Decodificando o access_token
+				$access_token_data = $this->decodeToken($results->access_token);
+
+				if ($access_token_data) {
+					// Adiciona as chaves do access_token diretamente ao userinfo
+					foreach ($access_token_data as $key => $value) {
+						$userinfo->$key = $value;
+					}
+				} else {
+					// Trata o caso de um token inválido
+					throw new Exception('Invalid access token format.');
+				}
 
 				$userinfoFromToken = $this->userinfoWithAccessToken($results->access_token);
 				
@@ -145,7 +160,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 						'uid' => $userinfo->jti,
 						'credentials' => array(
 							'token' => $results->id_token,
-							'expires' => $userinfo->expires_in
+							'expires' => $userinfo->exp
 						),
 						'raw' => $userinfo,
 						'info' => $info,
@@ -193,34 +208,104 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 	}
 
 	/**
+	 * Decodifica um token JWT para obter o payload.
+	 *
+	 * @param string $token O token a ser decodificado (id_token ou access_token)
+	 * @return stdClass|false O payload decodificado como objeto ou false se não for um JWT válido
+	 */
+	private function decodeToken($token) {
+		$parts = explode('.', $token);
+
+		// Verifica se o token tem as três partes do JWT
+		if (count($parts) !== 3) {
+			return false;
+		}
+
+		// Decodifica o payload (segunda parte)
+		$payload = base64_decode($parts[1], true);
+
+		// Retorna o JSON decodificado como um objeto
+		return $payload ? json_decode($payload) : false;
+	}
+
+	/**
 	 * @param string $access_token
 	 * @return array Parsed JSON results
 	 */
-	private function userinfoWithAccessToken($access_token){
-		$headers = array(
-			'Authorization' => 'Bearer ' . $access_token
-		);
+	private function userinfoWithAccessToken($access_token) {
+		$userinfo_endpoint = $this->strategy['userinfo_endpoint'];
 
-		// Realizando a requisição GET para o endpoint userinfo
-		$userinfo = $this->serverGet($this->strategy['userinfo_endpoint'], array(), null, $headers);
+		try {
+			// Criando uma instância do Curl
+			$curl = new Curl();
 
-		// Verificando se obteve uma resposta
-		if (!empty($userinfo)) {
-			// Retornando o objeto de dados do usuário (decodificando o JSON)
-			return json_decode($userinfo);
-		} else {
-			// Caso ocorra erro, retorna um erro com o conteúdo da resposta
-			$error = array(
-				'code' => 'userinfo_error',
-				'message' => 'Failed when attempting to query for user information',
-				'raw' => array(
-					'response' => $userinfo,
-					'headers' => $headers
-				)
-			);
+			// Configurando o cabeçalho Authorization
+			$curl->setHeader('Authorization', 'Bearer ' . $access_token);
+
+			// Realizando a requisição GET
+			$curl->get($userinfo_endpoint);
+
+			// Verificar se houve erro
+			if ($curl->error) {
+				$error = [
+					'code' => 'curl_error',
+					'message' => $curl->errorMessage,
+					'raw' => [
+						'response' => $curl->response,
+						'http_code' => $curl->httpStatusCode
+					]
+				];
+				$this->errorCallback($error);
+			}
+
+			// Retornar os dados decodificados
+			//return json_decode($curl->response, true);
+			return $curl->response;
+		} catch (Exception $e) {
+			// Captura exceções e as passa ao callback de erro
+			$error = [
+				'code' => 'exception',
+				'message' => $e->getMessage(),
+				'raw' => []
+			];
 			$this->errorCallback($error);
+		} finally {
+			// Fechar a instância do Curl
+			if (isset($curl)) {
+				$curl->close();
+			}
 		}
 	}
+
+	///**
+	// * @param string $access_token
+	// * @return array Parsed JSON results
+	// */
+	//private function userinfoWithAccessToken($access_token){
+	//	$headers = array(
+	//		'Authorization' => 'Bearer ' . $access_token
+	//	);
+	//
+	//	// Realizando a requisição GET para o endpoint userinfo
+	//	$userinfo = $this->serverGet($this->strategy['userinfo_endpoint'], array(), null, $headers);
+	//
+	//	// Verificando se obteve uma resposta
+	//	if (!empty($userinfo)) {
+	//		// Retornando o objeto de dados do usuário (decodificando o JSON)
+	//		return json_decode($userinfo);
+	//	} else {
+	//		// Caso ocorra erro, retorna um erro com o conteúdo da resposta
+	//		$error = array(
+	//			'code' => 'userinfo_error',
+	//			'message' => 'Failed when attempting to query for user information',
+	//			'raw' => array(
+	//				'response' => $userinfo,
+	//				'headers' => $headers
+	//			)
+	//		);
+	//		$this->errorCallback($error);
+	//	}
+	//}
 
 	public static function checkFileType($filename)
 	{
@@ -377,7 +462,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 			}
 		}
 		
-		self::getFile($user->profile, $userinfo->picture, $userinfo->access_token);
+		//self::getFile($user->profile, $userinfo->picture, $userinfo->access_token);
 	}
 
 	public static function  mask($val, $mask) {
