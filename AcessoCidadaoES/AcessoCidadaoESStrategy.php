@@ -38,6 +38,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 			'redirect_uri' => $this->strategy['redirect_uri'],
 			'nonce' => $_SESSION['AcessoCidadaoES-nonce'],
 			'state' => $_SESSION['AcessoCidadaoES-state'],
+			'response_mode' => 'form_post',
 			//'code_challenge' => $this->strategy['code_challenge'],
 			//'code_challenge_method' => $this->strategy['code_challenge_method'],
 		);
@@ -65,15 +66,23 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 		$app = App::i();
         
 		if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-            $app->log->debug("===================\n". 
-                             __METHOD__. 
-                             "\n" . print_r('Entrou na funcao callback.', true) . 
-                             "\n=================");
-        }
+			$app->log->debug("===================\n".
+				 __METHOD__.
+				 "\n" . print_r('Entrou na funcao callback.', true) .
+				 "\n=================");
+			$app->log->debug("===================\n".
+				 __METHOD__.
+				 "\nConteúdo de \$_GET:\n" . print_r($_GET, true) .
+				 "\n=================");
+			$app->log->debug("===================\n".
+				 __METHOD__.
+				 "\nConteúdo de \$_POST:\n" . print_r($_POST, true) .
+				 "\n=================");
+		}
 
-		if ((array_key_exists('code', $_GET) && !empty($_GET['code'])) && (array_key_exists("state", $_GET) && $_GET['state'] == $_SESSION['AcessoCidadaoES-state'])) {
+		if ((array_key_exists('code', $_POST) && !empty($_POST['code'])) && (array_key_exists("state", $_POST) && $_POST['state'] == $_SESSION['AcessoCidadaoES-state'])) {
 			
-			$code = $_GET['code'];
+			$code = $_POST['code'];
 		
 			$url = $this->strategy['token_endpoint'];
 
