@@ -118,44 +118,50 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 
 			$results = json_decode($response);
 
-			//verificar se o id_token eh suficiente ou se devemos fazer uma requisicao para userinfo_endpoint para pegar informacoes
-
-			if (!empty($results) && !empty($results->access_token)) {
+			if (!empty($results) && !empty($results->id_token) && !empty($results->access_token)) {
 
 				/** @var stdClass $userinfo */
-				//$userinfo = $this->userinfo($results->id_token);
-				//$userinfo->access_token =  $results->access_token;
+				$userinfo = $this->userinfo($results->id_token);
+				$userinfo->access_token =  $results->access_token;
 				//$userinfo->cpf =  $userinfo->sub;
 				//$exp_name = explode(" ", $userinfo->name);
 
-				$userinfo = $this->userinfoWithAccessToken($results->access_token);
-            	$userinfo->access_token = $results->access_token;
-			
-				$info = [
-					//'name' => $exp_name[0],
-					'name' => $userinfo->apelido,
-					'cpf' => $userinfo->cpf,
-					//'email' => $userinfo->email_verified ? $userinfo->email : null,
-					'email' => $userinfo->email,
-					//'phone_number' => ($userinfo->phone_number_verified ?? false) ? $userinfo->phone_number : null,
-					//'full_name' => $userinfo->name,
-					'full_name' => $userinfo->nome,
-					'dic_agent_fields_update' => $this->strategy['dic_agent_fields_update']
-				];
+				$userinfoFromToken = $this->userinfoWithAccessToken($results->access_token);
 				
-				$this->auth = array(
-					'uid' => $userinfo->jti,
-					'credentials' => array(
-						'token' => $results->id_token,
-						'expires' => $userinfo->exp
-					),
-					'raw' => $userinfo,
-					'info' => $info,
-					'applySeal' => $this->strategy['applySealId']
-				);
-		
+				// Valida se os dados necessarios foram retornados
+				if (!empty($userinfoFromToken)) {
+
+					$info = [
+						//'name' => $exp_name[0],
+						'name' => $userinfoFromToken->apelido,
+						'cpf' => $userinfoFromToken->cpf,
+						'email' => $userinfoFromToken->email,
+						//'full_name' => $userinfoFromToken->name,
+						'full_name' => $userinfoFromToken->nome,
+						'dic_agent_fields_update' => $this->strategy['dic_agent_fields_update']
+					];
+					
+					$this->auth = array(
+						'uid' => $userinfo->jti,
+						'credentials' => array(
+							'token' => $results->id_token,
+							'expires' => $userinfo->expires_in
+						),
+						'raw' => $userinfo,
+						'info' => $info,
+						'applySeal' => $this->strategy['applySealId']
+					);
 			
-				$this->callback();
+					$this->callback();
+
+				} else {
+					$error = [
+						'code' => 'userinfo_error',
+						'message' => 'Failed to retrieve user information',
+						'raw' => $results
+					];
+					$this->errorCallback($error);
+				}
 			} else {
 				$error = array(
 					'code' => 'access_token_error',
