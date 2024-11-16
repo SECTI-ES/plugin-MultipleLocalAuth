@@ -10,7 +10,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 	/**
 	 * Compulsory config keys, listed as unassociative arrays
 	 */
-	public $expects = [ 'auth_endpoint', 'token_endpoint', 'response_type', 'client_id', 'scope', 'redirect_uri', 'nonce', 'state', 'dic_agent_fields_update'];
+	public $expects = [ 'auth_endpoint', 'token_endpoint', 'response_type', 'client_id', 'scope', 'redirect_uri', 'nonce', 'dic_agent_fields_update'];
 	/**
 	 * Optional config keys, without predefining any default values.
 	 */
@@ -63,8 +63,15 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 	public function oauth2callback()
 	{
 		$app = App::i();
+        
+		if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+            $app->log->debug("===================\n". 
+                             __METHOD__. 
+                             "\n" . print_r('Entrou na funcao callback.', true) . 
+                             "\n=================");
+        }
 
-		if ((array_key_exists('code', $_GET) && !empty($_GET['code'])) && (array_key_exists("state", $_GET) && !empty($_GET['state']) == $_SESSION['AcessoCidadaoES-state'])) {
+		if ((array_key_exists('code', $_GET) && !empty($_GET['code'])) && (array_key_exists("state", $_GET) && $_GET['state'] == $_SESSION['AcessoCidadaoES-state'])) {
 			
 			$code = $_GET['code'];
 		
