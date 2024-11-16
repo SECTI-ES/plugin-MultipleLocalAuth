@@ -120,13 +120,16 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 
 			//verificar se o id_token eh suficiente ou se devemos fazer uma requisicao para userinfo_endpoint para pegar informacoes
 
-			if (!empty($results) && !empty($results->id_token)) {
+			if (!empty($results) && !empty($results->access_token)) {
 
 				/** @var stdClass $userinfo */
-				$userinfo = $this->userinfo($results->id_token);
-				$userinfo->access_token =  $results->access_token;
+				//$userinfo = $this->userinfo($results->id_token);
+				//$userinfo->access_token =  $results->access_token;
 				//$userinfo->cpf =  $userinfo->sub;
 				//$exp_name = explode(" ", $userinfo->name);
+
+				$userinfo = $this->userinfoWithAccessToken($results->access_token);
+            	$userinfo->access_token = $results->access_token;
 			
 				$info = [
 					//'name' => $exp_name[0],
@@ -135,7 +138,6 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 					//'email' => $userinfo->email_verified ? $userinfo->email : null,
 					'email' => $userinfo->email,
 					//'phone_number' => ($userinfo->phone_number_verified ?? false) ? $userinfo->phone_number : null,
-					//'full_name' => $userinfo->name,
 					//'full_name' => $userinfo->name,
 					'full_name' => $userinfo->nome,
 					'dic_agent_fields_update' => $this->strategy['dic_agent_fields_update']
@@ -182,6 +184,36 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 	{
 		$exp = explode(".", $id_token);
 		return json_decode(base64_decode($exp[1]));
+	}
+
+	/**
+	 * @param string $access_token
+	 * @return array Parsed JSON results
+	 */
+	private function userinfoWithAccessToken($access_token){
+		$headers = array(
+			'Authorization' => 'Bearer ' . $access_token
+		);
+
+		// Realizando a requisição GET para o endpoint userinfo
+		$userinfo = $this->serverGet($this->strategy['userinfo_endpoint'], array(), null, $headers);
+
+		// Verificando se obteve uma resposta
+		if (!empty($userinfo)) {
+			// Retornando o objeto de dados do usuário (decodificando o JSON)
+			return json_decode($userinfo);
+		} else {
+			// Caso ocorra erro, retorna um erro com o conteúdo da resposta
+			$error = array(
+				'code' => 'userinfo_error',
+				'message' => 'Failed when attempting to query for user information',
+				'raw' => array(
+					'response' => $userinfo,
+					'headers' => $headers
+				)
+			);
+			$this->errorCallback($error);
+		}
 	}
 
 	public static function checkFileType($filename)
