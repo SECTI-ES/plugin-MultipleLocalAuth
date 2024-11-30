@@ -443,44 +443,6 @@ class Provider extends \MapasCulturais\AuthProvider {
             echo "<li><a href='$url' $active><span class='icon icon-my-account'></span> $label</a></li>";
         
         });
-        
-        $app->hook('ALL(panel.my-account)', function () use($app,$config){
-        
-            $email = filter_var($app->request->post('email'),FILTER_SANITIZE_EMAIL);
-            if ($email) {
-                $app->auth->processMyAccount();
-            }
-            
-            $has_seal_govbr = false;
-            if($config['strategies']['govbr']['visible']){
-                
-                $agent = $app->user->profile;
-                $relations = $agent->getSealRelations();
-                $sealId = $config['strategies']['govbr']['applySealId'];
-
-                foreach($relations as $relation){
-                    if($relation->seal->id == $sealId){
-                        $has_seal_govbr = true;
-                        break;
-                    }
-                }
-            }
-            
-            $active = $this->template == 'panel/my-account' ? 'class="active"' : '';
-            $user = $app->user;
-            $email = $user->email ? $user->email : '';
-            $this->render('multiple-local-auth--my-account',[
-                'email' => $email,
-                'form_action' => $app->createUrl('panel', 'my-account'),
-                'feedback_success'        => $app->auth->feedback_success,
-                'feedback_msg'    => $app->auth->feedback_msg,
-                'config' => $config,
-                'has_seal_govbr' => $has_seal_govbr,
-                'menssagem_authenticated' => $config['strategies']['govbr']['menssagem_authenticated']
-
-            ]);
-        
-        });
 
         $app->applyHook('auth.provider.init');        
     }
@@ -571,6 +533,9 @@ class Provider extends \MapasCulturais\AuthProvider {
      */
     function validateRegisterFields() {
         $app = App::i();
+        $em = $app->em;
+        $conn = $em->getConnection();
+
         $config = $this->_config;
         $hasErrors = false;
 
@@ -607,14 +572,10 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $hasErrors = true;
             }
             
+            $foundAgent = [];
             $metadataFieldCpf = $this->getMetadataFieldCpfFromConfig();
-            // check if cpf (with "-" and ".") exists
-            $findUserByCpfMetadata1 = $app->repo("AgentMeta")->findBy(array('key' => $metadataFieldCpf, 'value' => $cpf));
-            // check if cpf (without "-" and ".") exists
-            $cpf = str_replace("-","",$cpf); // remove "-"
-            $cpf = str_replace(".","",$cpf); // remove "."
-            $findUserByCpfMetadata2 = $app->repo("AgentMeta")->findBy(array('key' => $metadataFieldCpf, 'value' => $cpf));
-            $foundAgent = $findUserByCpfMetadata1 ? $findUserByCpfMetadata1 : $findUserByCpfMetadata2;
+            $_cpf = implode("','", [$cpf, preg_replace('/[^0-9]/i', '', $cpf)]);
+            $foundAgent = $conn->fetchAll("SELECT * FROM agent_meta WHERE key IN ('{$metadataFieldCpf}', 'cpf') AND value IN ('{$_cpf}')");
 
             // creates an array with agents with status == 1, because the user can have, for example, 3 agents, but 2 have status == 0
             $existAgent  = [];
