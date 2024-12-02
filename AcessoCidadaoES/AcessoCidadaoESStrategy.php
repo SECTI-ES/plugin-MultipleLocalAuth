@@ -363,13 +363,13 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 		$app = App::i();
 
 		$user = null;
-		$cpf = self::mask($response['auth']['raw']['sub'],'###.###.###-##');
-		$metadataFieldCpf = $app->config['auth.config']['metadataFieldCPF'];
+		$cpf = self::mask($response['auth']['info']['cpf'],'###.###.###-##');
+		$metadataFieldCpf = env('AUTH_METADATA_FIELD_DOCUMENT', 'documento');
 		
 		$agent_meta = null;
 		if($am = $app->repo('AgentMeta')->findOneBy(["key" => $metadataFieldCpf, "value" => $cpf])){
 			$agent_meta = $am;
-		}elseif($am = $app->repo('AgentMeta')->findOneBy(["key" => $metadataFieldCpf, "value" => $response['auth']['raw']['sub']])){
+		}elseif($am = $app->repo('AgentMeta')->findOneBy(["key" => $metadataFieldCpf, "value" => $response['auth']['info']['cpf']])){
 			$agent_meta = $am;
 		}
 
