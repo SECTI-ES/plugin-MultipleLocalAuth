@@ -36,7 +36,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             'salt' => env('AUTH_SALT', null),
             'timeout' => env('AUTH_TIMEOUT', '24 hours'),
 
-            'loginOnRegister' => env('AUTH_LOGIN_ON_REGISTER', false),
+            'loginOnRegister' => env('AUTH_LOGIN_ON_REGISTER', true),
     
             'enableLoginByCPF' => env('AUTH_LOGIN_BY_CPF', true),
             'passwordMustHaveCapitalLetters' => env('AUTH_PASS_CAPITAL_LETTERS', true),
@@ -1038,6 +1038,13 @@ class Provider extends \MapasCulturais\AuthProvider {
             $cpf = preg_replace("/(\d{3}).?(\d{3}).?(\d{3})-?(\d{2})/", "$1.$2.$3-$4", $cpf);
             $cpf2 = preg_replace( '/[^0-9]/is', '', $cpf );
             $foundAgent = $app->repo("AgentMeta")->findBy(['key' => $metadataFieldCpf, 'value' => [$cpf,$cpf2]]);
+
+            if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+                $app->log->debug("=======================================\n". __METHOD__. "::CPF:: ". print_r($cpf,true) . "\n=================");
+                $app->log->debug("=======================================\n". "::CPF2:: ". print_r($cpf2,true) . "\n=================");
+                $app->log->debug("=======================================\n". "::METADATA:: ". print_r($metadataFieldCpf,true) . "\n=================");
+            }
+
             if(!$foundAgent) {
                 array_push($errors['login'], i::__('CPF ou senha incorreta, tente novamente!', 'multipleLocal'));
                 $hasErrors = true;
@@ -1461,6 +1468,9 @@ class Provider extends \MapasCulturais\AuthProvider {
         }
 
         if(!$user){
+            if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+                $app->log->debug("=======================================\n". __METHOD__. "::CREATE_USER:: ". "=================");
+            }
             // cria o usuário
             $user = new Entities\User;
             $user->authProvider = $response['auth']['provider'];
