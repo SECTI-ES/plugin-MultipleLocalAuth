@@ -46,14 +46,6 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 		foreach ($this->optionals as $key) {
 			if (!empty($this->strategy[$key])) $params[$key] = $this->strategy[$key];
 		}
-
-        $app = App::i();      
-        if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-            $app->log->debug("===================\n". 
-                             __METHOD__. 
-                             "\n" . print_r($url . '?' . http_build_query($params), true) . 
-                             "\n=================");
-        }
 		
 		$this->clientGet($url, $params);
 	}
@@ -70,14 +62,14 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 				 __METHOD__.
 				 "\n" . print_r('Entrou na funcao callback.', true) .
 				 "\n=================");
-			$app->log->debug("===================\n".
-				 __METHOD__.
-				 "\nConteúdo de \$_GET:\n" . print_r($_GET, true) .
-				 "\n=================");
-			$app->log->debug("===================\n".
-				 __METHOD__.
-				 "\nConteúdo de \$_POST:\n" . print_r($_POST, true) .
-				 "\n=================");
+			// $app->log->debug("===================\n".
+			// 	 __METHOD__.
+			// 	 "\nConteúdo de \$_GET:\n" . print_r($_GET, true) .
+			// 	 "\n=================");
+			// $app->log->debug("===================\n".
+			// 	 __METHOD__.
+			// 	 "\nConteúdo de \$_POST:\n" . print_r($_POST, true) .
+			// 	 "\n=================");
 		}
 
 		//if ((array_key_exists('code', $_POST) && !empty($_POST['code'])) && (array_key_exists("state", $_POST) && $_POST['state'] == $_SESSION['AcessoCidadaoES-state'])) {
@@ -99,23 +91,17 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 			$curl->setHeader('Authorization', "Basic {$token}");
 
 			$app = App::i();      
-			if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-				$app->log->debug("===================\n". 
-								 __METHOD__. 
-								 "\n" . print_r($url . '?' . http_build_query($params), true) . 
-								 "\n=================");
-			}
 
 			$curl->post($url, $params);
 			$curl->close();
 			$response = $curl->response;
 
-			if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-				$app->log->debug("===================\n".
-									 __METHOD__.
-									 "\nResponse: " . print_r($response, true) . 
-									 "\n=================");
-			}
+			// if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+			// 	$app->log->debug("===================\n".
+			// 						 __METHOD__.
+			// 						 "\nResponse: " . print_r($response, true) . 
+			// 						 "\n=================");
+			// }
 
 			//$results = json_decode($response);
 			$results=$response;
@@ -166,7 +152,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 						'info' => $info,
 						'applySeal' => $this->strategy['applySealId']
 					);
-			
+
 					$this->callback();
 
 				} else {
@@ -374,12 +360,19 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 		}
 
         if($agent_meta){
+			if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+				$app->log->debug("=======================================\n". __METHOD__. "::Agent::" . "=======================================\n");
+			}
 
 			$agent = $agent_meta->owner;
 			$user = $agent->user;
 
 			if(!$agent->isUserProfile){
-				$user = new User();
+				if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+					$app->log->debug("=======================================\n". __METHOD__. "::User::" . "=======================================\n");
+				}
+
+				$user = new Entities\User;
 				$user->authProvider = $response['auth']['provider'];
 				$user->authUid = $response['auth']['uid'];
 				$user->email = $response['auth']['info']['email'];
@@ -389,9 +382,13 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 				$agent->userId = $user->id;
 				$agent->save(true);
 				$agent->refresh();
+				// $app->em->flush();
 
 				$user->profile = $agent;
 				$user->save(true);
+
+				$user->createPermissionsCacheForUsers([$user]);
+            	$agent->createPermissionsCacheForUsers([$user]);
 			}
 		}
 
@@ -432,11 +429,16 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 	{
 		$app = App::i();
 
+		if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+			$app->log->debug("=======================================\n". __METHOD__. "::RAW::" . print_r($response['auth']['raw'], true) . "=======================================\n");
+			$app->log->debug("=======================================\n". __METHOD__. "::INFO::" . print_r($response['auth']['info'], true) . "=======================================\n");
+		}
+
 		$auth_data = $response['auth']['info'];
 		$userinfo = (object) $response['auth']['raw'];
 
 		$app->hook("entity(Agent).get(lockedFields)", function(&$lockedFields) use ($app){
-			$config = $app->config['auth.config']['strategies']['govbr'];
+			$config = $app->config['auth.config']['strategies']['AcessoCidadaoES'];
 			$fieladsUnlocked = array_keys($config['dic_agent_fields_update']);
 			$lockedFields = array_diff($lockedFields, $fieladsUnlocked);
 		});

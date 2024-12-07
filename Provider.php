@@ -353,6 +353,10 @@ class Provider extends \MapasCulturais\AuthProvider {
 
             $login = $app->auth->doLogin();
 
+            if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+				$app->log->debug("===================" . __METHOD__ . "::Login::" . print_r($login, true) . "=================");
+			}
+
             if ($login['success']) {
                 $this->json([
                     'error' => false, 
@@ -1039,12 +1043,6 @@ class Provider extends \MapasCulturais\AuthProvider {
             $cpf2 = preg_replace( '/[^0-9]/is', '', $cpf );
             $foundAgent = $app->repo("AgentMeta")->findBy(['key' => $metadataFieldCpf, 'value' => [$cpf,$cpf2]]);
 
-            if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-                $app->log->debug("=======================================\n". __METHOD__. "::CPF:: ". print_r($cpf,true) . "\n=================");
-                $app->log->debug("=======================================\n". "::CPF2:: ". print_r($cpf2,true) . "\n=================");
-                $app->log->debug("=======================================\n". "::METADATA:: ". print_r($metadataFieldCpf,true) . "\n=================");
-            }
-
             if(!$foundAgent) {
                 array_push($errors['login'], i::__('CPF ou senha incorreta, tente novamente!', 'multipleLocal'));
                 $hasErrors = true;
@@ -1180,7 +1178,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             //Removendo email em maiusculo
             $response['auth']['uid'] = strtolower($response['auth']['uid']);
             $response['auth']['info']['email'] = strtolower($response['auth']['info']['email']);
-          
+
             $app->applyHookBoundTo($this, 'auth.createUser:before', [$response]);
             $user = $this->_createUser($response);
             $app->applyHookBoundTo($this, 'auth.createUser:after', [$user, $response]);
@@ -1311,9 +1309,6 @@ class Provider extends \MapasCulturais\AuthProvider {
         $reason = '';
         $response = $this->_getResponse();
         
-        if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-            $app->log->debug("=======================================\n". __METHOD__. print_r($response,true) . "\n=================");
-        }
 
         $valid = false;
         // o usuário ainda não tentou se autenticar
@@ -1449,6 +1444,11 @@ class Provider extends \MapasCulturais\AuthProvider {
     function authenticateUser(Entities\User $user) {
         $this->_setAuthenticatedUser($user);
         $_SESSION['multipleLocalUserId'] = $user->id;
+
+
+        if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+            $app->log->debug("===================" . __METHOD__ . print_r($user->id, true) . "=================");
+        }
     }
     
     protected function _createUser($response) {
@@ -1468,9 +1468,6 @@ class Provider extends \MapasCulturais\AuthProvider {
         }
 
         if(!$user){
-            if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-                $app->log->debug("=======================================\n". __METHOD__. "::CREATE_USER:: ". "=================");
-            }
             // cria o usuário
             $user = new Entities\User;
             $user->authProvider = $response['auth']['provider'];
