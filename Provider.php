@@ -1315,8 +1315,11 @@ class Provider extends \MapasCulturais\AuthProvider {
             return false;
         // verifica se a resposta é um erro
         if (array_key_exists('error', $response)) {
+            if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+				$app->log->debug("=======================================\n". __METHOD__. print_r($response, true) . "=======================================\n");
+			}
 
-            $app->halt(500, i::__('Opauth returns error auth response'));
+            return false;
         } else {
             /**
             * Auth response validation
@@ -1325,9 +1328,9 @@ class Provider extends \MapasCulturais\AuthProvider {
             * is sent through GET or POST.
             */
             if (empty($response['auth']) || empty($response['timestamp']) || empty($response['signature']) || empty($response['auth']['provider']) || empty($response['auth']['uid'])) {
-                $app->halt(500, i::__('auth error', 'Invalid auth response: Missing key auth response components.'));
+                return false;
             } elseif (!$this->opauth->validate(sha1(print_r($response['auth'], true)), $response['timestamp'], $response['signature'], $reason)) {
-                $app->halt(500, i::__('auth error', "Invalid auth response: {$reason}"));
+                return false;
             } else {
                 $valid = true;
             }
