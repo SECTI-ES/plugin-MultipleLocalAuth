@@ -353,10 +353,6 @@ class Provider extends \MapasCulturais\AuthProvider {
 
             $login = $app->auth->doLogin();
 
-            if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-				$app->log->debug("===================" . __METHOD__ . "::Login::" . print_r($login, true) . "=================");
-			}
-
             if ($login['success']) {
                 $this->json([
                     'error' => false, 
@@ -1315,9 +1311,10 @@ class Provider extends \MapasCulturais\AuthProvider {
             return false;
         // verifica se a resposta é um erro
         if (array_key_exists('error', $response)) {
-            if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-				$app->log->debug("=======================================\n". __METHOD__. print_r($response, true) . "=======================================\n");
-			}
+
+            // if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+			// 	$app->log->debug("=======================================\n". __METHOD__. print_r($response, true) . "=======================================\n");
+			// }
 
             return false;
         } else {
@@ -1446,11 +1443,6 @@ class Provider extends \MapasCulturais\AuthProvider {
     function authenticateUser(Entities\User $user) {
         $this->_setAuthenticatedUser($user);
         $_SESSION['multipleLocalUserId'] = $user->id;
-
-
-        if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-            $app->log->debug("===================" . __METHOD__ . print_r($user->id, true) . "=================");
-        }
     }
     
     protected function _createUser($response) {

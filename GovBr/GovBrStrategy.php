@@ -55,13 +55,12 @@ class GovBrStrategy extends OpauthStrategy
 	 */
 	public function oauth2callback()
 	{
-		$app = App::i();
-
-		if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-			$app->log->debug("===================\n".
-				 __METHOD__.
-				 "\n" . print_r('Entrou na funcao callback.', true) .
-				 "\n=================");
+		// $app = App::i();
+		// if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+		// 	$app->log->debug("===================\n".
+		// 		 __METHOD__.
+		// 		 "\n" . print_r('Entrou na funcao callback.', true) .
+		// 		 "\n=================");
 			// $app->log->debug("===================\n".
 			// 	 __METHOD__.
 			// 	 "\nConteúdo de \$_GET:\n" . print_r($_GET, true) .
@@ -70,7 +69,7 @@ class GovBrStrategy extends OpauthStrategy
 			// 	 __METHOD__.
 			// 	 "\nConteúdo de \$_POST:\n" . print_r($_POST, true) .
 			// 	 "\n=================");
-		}
+		// }
 
 		if ((array_key_exists('code', $_GET) && !empty($_GET['code'])) && (array_key_exists("state", $_GET) && $_GET['state'] == $_SESSION['govbr-state'])) {
 			
@@ -96,14 +95,6 @@ class GovBrStrategy extends OpauthStrategy
 			$curl->close();
 			$response = $curl->response;
 
-			// imprime response do post - Passo 6
-			// if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-			// 	$app->log->debug("===================\n".
-			// 			 		__METHOD__.
-			// 					"\nResponse: " . print_r($response, true) .
-			// 					"\n=================");
-			// }
-
 			$responseBody = json_encode($response);
 			$jsonResponse = json_decode($responseBody);
 
@@ -112,15 +103,8 @@ class GovBrStrategy extends OpauthStrategy
 			    throw new \Exception('Erro ao decodificar JSON: ' . json_last_error_msg());
 			}
 
-			$results = $jsonResponse;
 			//$results = json_decode($response);
-
-			// if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-			// 	$app->log->debug("===================\n".
-			// 			 		__METHOD__.
-			// 					"\nResults: " . print_r($results, true) .
-			// 					"\n=================");
-			// }
+			$results = $jsonResponse;
 
 			if (!empty($results) && !empty($results->id_token)) {
 
@@ -249,17 +233,11 @@ class GovBrStrategy extends OpauthStrategy
 		}
 
         if($agent_meta){
-			if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-				$app->log->debug("=======================================\n". __METHOD__. "::Agent::" . "=======================================\n");
-			}
 
 			$agent = $agent_meta->owner;
 			$user = $agent->user;
 
 			if(!$agent->isUserProfile){
-				if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-					$app->log->debug("=======================================\n". __METHOD__. "::User::" . "=======================================\n");
-				}
 
 				$user = new Entities\User;
 				$user->authProvider = $response['auth']['provider'];
@@ -317,10 +295,10 @@ class GovBrStrategy extends OpauthStrategy
 	{
 		$app = App::i();
 
-		if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
-			$app->log->debug("=======================================\n". __METHOD__. "::RAW::" . print_r($response['auth']['raw'], true) . "=======================================\n");
-			$app->log->debug("=======================================\n". __METHOD__. "::INFO::" . print_r($response['auth']['info'], true) . "=======================================\n");
-		}
+		// if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+		// 	$app->log->debug("=======================================\n". __METHOD__. "::RAW::" . print_r($response['auth']['raw'], true) . "=======================================\n");
+		// 	$app->log->debug("=======================================\n". __METHOD__. "::INFO::" . print_r($response['auth']['info'], true) . "=======================================\n");
+		// }
 
 		$auth_data = $response['auth']['info'];
 		$userinfo = (object) $response['auth']['raw'];
