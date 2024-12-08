@@ -429,12 +429,11 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 		
 		$app->disableAccessControl();
 		foreach($auth_data['dic_agent_fields_update'] as $entity_key => $ref){
-			if($user->profile->$entity_key != $auth_data[$ref]){
-				if(($entity_key == "name") && ($user->profile->name == "" || $user->profile->name === "Meu Nome")){
+			if(!($user->profile->$entity_key) && $user->profile->$entity_key != $auth_data[$ref]){
+				if($entity_key == "nomeCompleto" || $entity_key == "name")
+					$user->profile->$entity_key = mb_convert_case($auth_data[$ref], MB_CASE_TITLE, "UTF-8");
+				else
 					$user->profile->$entity_key = $auth_data[$ref];
-				}else{
-					$user->profile->$entity_key = $auth_data[$ref];
-				}
 			}
 		}
 		$user->profile->save(true);

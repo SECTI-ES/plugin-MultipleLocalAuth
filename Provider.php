@@ -1373,8 +1373,9 @@ class Provider extends \MapasCulturais\AuthProvider {
             }
 
             if (empty($user)) {
-                $email = $response['auth']['info']['email'];
-                $user = $app->repo('User')->findOneBy(['email' => $email]);
+                // $email = $response['auth']['info']['email'];
+                // $user = $app->repo('User')->findOneBy(['email' => $email]);
+                return null;
             }            
 
             return $user;
@@ -1466,7 +1467,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             $user = new Entities\User;
             $user->authProvider = $response['auth']['provider'];
             $user->authUid = $response['auth']['uid'];
-            $user->email = $response['auth']['info']['email'];
+            $user->email = mb_strtolower($response['auth']['info']['email']);
 
             $app->em->persist($user);
             
@@ -1474,36 +1475,33 @@ class Provider extends \MapasCulturais\AuthProvider {
             $agent = new Entities\Agent($user);
 
             if(isset($response['auth']['info']['name'])){
-                $agent->name = $response['auth']['info']['name'];
+                $agent->name = mb_convert_case($response['auth']['info']['name'], MB_CASE_TITLE, "UTF-8");
             }
             elseif(isset($response['auth']['info']['first_name']) && isset($response['auth']['info']['last_name'])){
-                $agent->name = $response['auth']['info']['first_name'] . ' ' . $response['auth']['info']['last_name'];
+                $agent->name = mb_convert_case($response['auth']['info']['first_name'] . ' ' . $response['auth']['info']['last_name'], MB_CASE_TITLE, "UTF-8");
             }
             elseif(isset($response['auth']['agentData']['name'])){
-                $agent->name = $response['auth']['agentData']['name'];
+                $agent->name = mb_convert_case($response['auth']['agentData']['name'], MB_CASE_TITLE, "UTF-8");
             }
             else{
                 $agent->name = '';
             }
+
+            if(isset($response['auth']['info']['full_name'])){
+                $agent->nomeCompleto = mb_convert_case($response['auth']['info']['full_name'], MB_CASE_TITLE, "UTF-8");
+            }
             
             if(isset($response['auth']['info']['phone_number'])){
-                $metadataFieldPhone = $this->getMetadataFieldPhone(); 
-                $metadataFieldPhone = $this->getMetadataFieldPhone(); 
                 $metadataFieldPhone = $this->getMetadataFieldPhone(); 
                 $agent->$metadataFieldPhone = $response['auth']['info']['phone_number'];
             }
 
             if(isset($response['auth']['agentData']['shortDescription'])){
-                $agent->shortDescription = $response['auth']['agentData']['shortDescription'];
+                $agent->shortDescription = ucfirst(strtolower($response['auth']['agentData']['shortDescription']));
             }
 
             if(isset($response['auth']['agentData']['terms:area'])){
                 $agent->terms['area']  = $response['auth']['agentData']['terms:area'];
-            }
-
-            if(isset($response['auth']['info']['phone_number'])){
-                $metadataFieldPhone = $this->getMetadataFieldPhone();  
-                $agent->setMetadata($metadataFieldPhone, $response['auth']['info']['phone_number']);
             }
 
             //cpf
