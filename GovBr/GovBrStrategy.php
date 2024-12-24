@@ -84,16 +84,31 @@ class GovBrStrategy extends OpauthStrategy
 			);
 
 			$token = base64_encode("{$this->strategy['client_id']}:{$this->strategy['client_secret']}");
-			$curl = new Curl;
-			$curl->setHeader('Content-Type', 'application/x-www-form-urlencoded');
-			$curl->setHeader('Authorization', "Basic {$token}");
 			
 			// imprime URL de requisicao para conferencia do POST - Passo 6 - https://acesso.gov.br/roteiro-tecnico/iniciarintegracao.html
 			$app = App::i();
+			
+			$attempts = 5;
+			do {
+				if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+					$app->log->debug("========================= Tentativa de Login: " . $attempts . " =========================\n\n");
+				}
+				$curl = new Curl;
+				$curl->setHeader('Content-Type', 'application/x-www-form-urlencoded');
+				$curl->setHeader('Authorization', "Basic {$token}");
 
-			$curl->post($url, $params);
-			$curl->close();
-			$response = $curl->response;
+				$curl->post($url, $params);
+				$curl->close();
+				$response = $curl->response;
+
+				$attempts = $attempts - 1;
+			} while ($attempts > 0 && empty($response));
+
+			if(empty($response)){
+				if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
+					$app->log->debug("========================= Tentativa de Login Falhou: \n" . $attempts . " && " . $response . " =========================\n\n");
+				}
+			}
 
 			$responseBody = json_encode($response);
 			$jsonResponse = json_decode($responseBody);
