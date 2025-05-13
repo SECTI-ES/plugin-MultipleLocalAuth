@@ -46,7 +46,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 		foreach ($this->optionals as $key) {
 			if (!empty($this->strategy[$key])) $params[$key] = $this->strategy[$key];
 		}
-		
+
 		$this->clientGet($url, $params);
 	}
 
@@ -73,9 +73,9 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 
 		//if ((array_key_exists('code', $_POST) && !empty($_POST['code'])) && (array_key_exists("state", $_POST) && $_POST['state'] == $_SESSION['AcessoCidadaoES-state'])) {
 		if ((array_key_exists('code', $_POST) && !empty($_POST['code']))) {
-			
+
 			$code = $_POST['code'];
-		
+
 			$url = $this->strategy['token_endpoint'];
 
 			$params = array(
@@ -89,7 +89,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 			$curl->setHeader('Content-Type', 'application/x-www-form-urlencoded');
 			$curl->setHeader('Authorization', "Basic {$token}");
 
-			$app = App::i();      
+			$app = App::i();
 
 			$curl->post($url, $params);
 			$curl->close();
@@ -105,7 +105,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 				$userinfo->access_token =  $results->access_token;
 				//$userinfo->cpf =  $userinfo->sub;
 				//$exp_name = explode(" ", $userinfo->name);
-				
+
 				// Decodificando o access_token
 				$access_token_data = $this->decodeToken($results->access_token);
 
@@ -120,7 +120,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 				}
 
 				$userinfoFromToken = $this->userinfoWithAccessToken($results->access_token);
-				
+
 				// Valida se os dados necessarios foram retornados
 				if (!empty($userinfoFromToken)) {
 
@@ -133,7 +133,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 						'full_name' => $userinfoFromToken->nome,
 						'dic_agent_fields_update' => $this->strategy['dic_agent_fields_update']
 					];
-					
+
 					$this->auth = array(
 						'uid' => $userinfo->jti,
 						'credentials' => array(
@@ -176,7 +176,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 	}
 
 	/**
-	 * @param string $id_token 
+	 * @param string $id_token
 	 * @return array Parsed JSON results
 	 */
 	private function userinfo($id_token)
@@ -309,7 +309,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 		if(mb_strpos($response, 'não encontrada')){
 			return;
 		}
-		
+
 		$tmp = tempnam("/tmp", "");
 		$handle = fopen($tmp, "wb");
 		fwrite($handle,$response);
@@ -343,7 +343,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 		$user = null;
 		$cpf = self::mask($response['auth']['info']['cpf'],'###.###.###-##');
 		$metadataFieldCpf = env('AUTH_METADATA_FIELD_DOCUMENT', 'documento');
-		
+
 		$agent_meta = null;
 		if($am = $app->repo('AgentMeta')->findOneBy(["key" => $metadataFieldCpf, "value" => $cpf])){
 			$agent_meta = $am;
@@ -360,7 +360,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 				$user->authProvider = $response['auth']['provider'];
 				$user->authUid = $response['auth']['uid'];
 				$user->email = $response['auth']['info']['email'];
-	
+
 				$app->em->persist($user);
 
 				$agent->userId = $user->id;
@@ -403,7 +403,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 			if(!$has_new_seal){
 				$agent->createSealRelation($seal);
 			}
-			
+
 			$app->enableAccessControl();
 
 		}
@@ -426,7 +426,7 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 			$fieladsUnlocked = array_keys($config['dic_agent_fields_update']);
 			$lockedFields = array_diff($lockedFields, $fieladsUnlocked);
 		});
-		
+
 		$app->disableAccessControl();
 		foreach($auth_data['dic_agent_fields_update'] as $entity_key => $ref){
 			if(!($user->profile->$entity_key) && $user->profile->$entity_key != $auth_data[$ref]){
@@ -440,13 +440,13 @@ class AcessoCidadaoESStrategy extends OpauthStrategy
 		$app->enableAccessControl();
 
 		if($allAgents = $app->repo("Agent")->findBy(['userId' => $user->id, '_type' => 1])){
-			
+
 			if(count($allAgents) == 1){
 				$_agent = $allAgents[0];
 				$_agent->setAsUserProfile();
 			}
 		}
-		
+
 		//self::getFile($user->profile, $userinfo->picture, $userinfo->access_token);
 	}
 

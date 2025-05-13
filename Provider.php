@@ -9,35 +9,35 @@ use Respect\Validation\Validator;
 
 class Provider extends \MapasCulturais\AuthProvider {
     protected $opauth;
-    
+
     var $feedback_success   = false;
     var $feedback_msg       = '';
     var $triedEmail         = '';
     var $triedName          = '';
-    
+
     public $register_form_action = '';
     public $register_form_method = 'POST';
-    
+
     public static $passMetaName = 'localAuthenticationPassword';
 
     public static $recoverTokenMetadata     = 'recover_token';
     public static $recoverTokenTimeMetadata = 'recover_token_time';
-    
+
     public static $accountIsActiveMetadata    = 'accountIsActive';
     public static $tokenVerifyAccountMetadata = 'tokenVerifyAccount';
 
     public static $loginAttempMetadata            = "loginAttemp";
     public static $timeBlockedloginAttempMetadata = "timeBlockedloginAttemp";
-    
+
     function __construct ($config) {
         $app = App::i();
-        
+
         $config += [
             'salt' => env('AUTH_SALT', null),
             'timeout' => env('AUTH_TIMEOUT', '24 hours'),
 
             'loginOnRegister' => env('AUTH_LOGIN_ON_REGISTER', true),
-    
+
             'enableLoginByCPF' => env('AUTH_LOGIN_BY_CPF', true),
             'requireCpf' => env('AUTH_REQUIRED_CPF', true),
 
@@ -47,14 +47,14 @@ class Provider extends \MapasCulturais\AuthProvider {
             'passwordMustHaveNumbers' => env('AUTH_PASS_NUMBERS', true),
             'minimumPasswordLength' => env('AUTH_PASS_LENGTH', 6),
             'userMustConfirmEmailToUseTheSystem' =>  env('AUTH_EMAIL_CONFIRMATION', false),
-    
+
             'google-recaptcha-secret' => env('GOOGLE_RECAPTCHA_SECRET', false),
             'google-recaptcha-sitekey' => env('GOOGLE_RECAPTCHA_SITEKEY', false),
-    
+
             'sessionTime' => env('AUTH_SESSION_TIME', 7200), // int , tempo da sessao do usuario em segundos
             'numberloginAttemp' => env('AUTH_NUMBER_ATTEMPTS', 5), // tentativas de login antes de bloquear o usuario por X minutos
             'timeBlockedloginAttemp' => env('AUTH_BLOCK_TIME', 900), // tempo de bloqueio do usuario em segundos
-    
+
             'metadataFieldCPF' => env('AUTH_METADATA_FIELD_DOCUMENT', 'documento'),
             'metadataFieldPhone' => env('AUTH_METADATA_FIELD_PHONE', 'telefone1'),
 
@@ -99,7 +99,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                     'client_id' => env('AUTH_GOV_BR_CLIENT_ID', null),
                     'client_secret' => env('AUTH_GOV_BR_SECRET', null),
                     'scope' => env('AUTH_GOV_BR_SCOPE', null),
-                    'redirect_uri' => env('AUTH_GOV_BR_REDIRECT_URI', null), 
+                    'redirect_uri' => env('AUTH_GOV_BR_REDIRECT_URI', null),
                     'auth_endpoint' => env('AUTH_GOV_BR_ENDPOINT', null),
                     'token_endpoint' => env('AUTH_GOV_BR_TOKEN_ENDPOINT', null),
                     'nonce' => env('AUTH_GOV_BR_NONCE', null),
@@ -118,7 +118,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                     'client_id' => env('AUTH_ACESSO_CIDADAO_ES_CLIENT_ID', null),
                     'client_secret' => env('AUTH_ACESSO_CIDADAO_ES_SECRET', null),
                     'scope' => env('AUTH_ACESSO_CIDADAO_ES_SCOPE', null),
-                    'redirect_uri' => env('AUTH_ACESSO_CIDADAO_ES_REDIRECT_URI', null), 
+                    'redirect_uri' => env('AUTH_ACESSO_CIDADAO_ES_REDIRECT_URI', null),
                     'auth_endpoint' => env('AUTH_ACESSO_CIDADAO_ES_ENDPOINT', null),
                     'token_endpoint' => env('AUTH_ACESSO_CIDADAO_ES_TOKEN_ENDPOINT', null),
                     'nonce' => env('AUTH_ACESSO_CIDADAO_ES_NONCE', null),
@@ -139,7 +139,7 @@ class Provider extends \MapasCulturais\AuthProvider {
     function dump($x) {
         \Doctrine\Common\Util\Debug::dump($x);
     }
-    
+
     function setFeedback($msg, $success = false) {
         $this->feedback_success = $success;
         $this->feedback_msg = $msg;
@@ -149,14 +149,14 @@ class Provider extends \MapasCulturais\AuthProvider {
     protected function usingSocialLogin() {
         return is_array($this->_config['strategies']) && count($this->_config['strategies']) > 0;
     }
-    
+
     protected function _init() {
 
         $app = App::i();
         $config = $this->_config;
 
         $app->hook('GET(auth.passwordvalidationinfos)', function () use($config){
-            
+
             $passwordRules = array(
                 "passwordMustHaveCapitalLetters" => $config['passwordMustHaveCapitalLetters'],
                 "passwordMustHaveLowercaseLetters" => $config['passwordMustHaveLowercaseLetters'],
@@ -179,8 +179,8 @@ class Provider extends \MapasCulturais\AuthProvider {
             $usermeta = $app->repo("UserMeta")->findOneBy(array('key' => Provider::$tokenVerifyAccountMetadata, 'value' => $token));
 
             if (!$usermeta) {
-               $errorMsg = i::__('Token inválidos', 'multipleLocal');                         
-               $this->render('confirm-email',['msg'=>$errorMsg]);   
+               $errorMsg = i::__('Token inválidos', 'multipleLocal');
+               $this->render('confirm-email',['msg'=>$errorMsg]);
             }
 
             $user = $usermeta->owner;
@@ -196,7 +196,7 @@ class Provider extends \MapasCulturais\AuthProvider {
         $app->hook('POST(auth.adminchangeuseremail)',function () use ($app) {
             $new_email = $this->data['new_email'];
             $email = $this->data['email'];
- 
+
             $user = $app->auth->getUserFromDB($email);
 
             // email exists? (case insensitive)
@@ -221,7 +221,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $this->json (array("new_email"=>$new_email));
             } else {
                 $this->json (array("error"=>"Informe um email válido"));
-            }            
+            }
         });
 
         $app->hook('adminchangeuseremail', function ($userEmail) use($app){
@@ -247,14 +247,14 @@ class Provider extends \MapasCulturais\AuthProvider {
 
         /* /refatorar/ */
 
-        
-        
+
+
         $config = $this->_config;
-        
+
         $config['path'] = preg_replace('#^https?\:\/\/[^\/]*(/.*)#', '$1', $app->createUrl('auth'));
-        
+
         /****** INIT OPAUTH ******/
-        
+
         if ($this->usingSocialLogin()){
             $opauth_config = [
                 'strategy_dir' => PROTECTED_PATH . '/vendor/opauth/',
@@ -264,14 +264,14 @@ class Provider extends \MapasCulturais\AuthProvider {
                 'path' => $config['path'],
                 'callback_url' => $app->createUrl('auth','response')
             ];
-            
+
             $opauth = new \Opauth($opauth_config, false );
             $this->opauth = $opauth;
         }
-        
+
 
         // Register form config
-        $this->register_form_action = $app->createUrl('auth', 'register');    
+        $this->register_form_action = $app->createUrl('auth', 'register');
         if(isset($config['register_form'])){
             $this->register_form_action = $config['register_form']['action'];
             $this->register_form_method = $config['register_form']['method'];
@@ -299,7 +299,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $opauth->run();
             });
         }
-        
+
         $app->hook('GET(auth.response)', function () use($app){
 
             $app->auth->processResponse();
@@ -308,7 +308,7 @@ class Provider extends \MapasCulturais\AuthProvider {
 
                 $redirect_url = $app->auth->getRedirectPath();
                 unset($_SESSION['mapasculturais.auth.redirect_path']);
-                
+
                 $app->redirect($redirect_url);
             }else{
                 $app->applyHook('auth.failed');
@@ -347,7 +347,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $this->errorJson($registration['errors'], 200);
             }
         });
-        
+
         $app->hook('POST(auth.login)', function () use($app){
             /**
              * @var \MapasCulturais\Controller $this
@@ -357,7 +357,7 @@ class Provider extends \MapasCulturais\AuthProvider {
 
             if ($login['success']) {
                 $this->json([
-                    'error' => false, 
+                    'error' => false,
                     'redirectTo' => $app->auth->getRedirectPath()
                 ]);
             } else {
@@ -369,7 +369,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             /**
              * @var \MapasCulturais\Controller $this
              */
-            
+
             $requestRecover = $app->auth->recover();
 
             if ($requestRecover['success']) {
@@ -383,7 +383,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             /**
              * @var \MapasCulturais\Controller $this
              */
-            
+
             $doRecover = $app->auth->doRecover();
 
             if ($doRecover['success']) {
@@ -397,7 +397,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             /**
              * @var \MapasCulturais\Controller $this
              */
-            
+
             $changePassword = $app->auth->changePassword();
 
             if ($changePassword['success']) {
@@ -411,7 +411,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             /**
              * @var \MapasCulturais\Controller $this
              */
-            
+
             $newPassword = $app->auth->newPassword();
 
             if ($newPassword['success']) {
@@ -421,11 +421,11 @@ class Provider extends \MapasCulturais\AuthProvider {
             }
         });
 
-        $app->hook('POST(auth.adminchangeuserpassword)',function () use ($app) {  
+        $app->hook('POST(auth.adminchangeuserpassword)',function () use ($app) {
             /**
              * @var \MapasCulturais\Controller $this
              */
-            
+
             $adminchangeuserpassword = $app->auth->adminchangeuserpassword();
 
             if ($adminchangeuserpassword['success']) {
@@ -434,22 +434,22 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $this->errorJson($adminchangeuserpassword['errors'], 200);
             }
         });
-    
-        
+
+
         $app->hook('panel.menu:after', function () use($app){
-        
+
             $active = $this->template == 'panel/my-account' ? 'class="active"' : '';
             $url = $app->createUrl('panel', 'my-account');
             $label = i::__('Minha conta', 'multipleLocal');
-            
+
             echo "<li><a href='$url' $active><span class='icon icon-my-account'></span> $label</a></li>";
-        
+
         });
 
-        $app->applyHook('auth.provider.init');        
+        $app->applyHook('auth.provider.init');
     }
-    
-    
+
+
     /********************************************************************************/
     /**************************** LOCAL AUTH METHODS  *******************************/
     /********************************************************************************/
@@ -459,7 +459,7 @@ class Provider extends \MapasCulturais\AuthProvider {
         $app->contentType('application/json');
         $app->halt($status, json_encode($data));
     }
-    
+
 
     function verificarToken($token, $claveSecreta)
     {
@@ -492,7 +492,7 @@ class Provider extends \MapasCulturais\AuthProvider {
         if (empty($_POST["g-recaptcha-response"])) return false;
 
         $token = $_POST["g-recaptcha-response"];
-        $verified = $this->verificarToken($token, $config["google-recaptcha-secret"]);   
+        $verified = $this->verificarToken($token, $config["google-recaptcha-secret"]);
 
         return $verified ? true : false;
     }
@@ -525,7 +525,7 @@ class Provider extends \MapasCulturais\AuthProvider {
         if ($pass != $verify) {
             array_push($errors, i::__("As senhas não conferem.", 'multipleLocal'));
         }
-        
+
         return $errors;
     }
 
@@ -573,11 +573,11 @@ class Provider extends \MapasCulturais\AuthProvider {
                 array_push($errors['user']['cpf'], i::__('Por favor, informe um cpf válido.', 'multipleLocal'));
                 $hasErrors = true;
             }
-            
+
             if($this->validateCPF($cpf)) {
                 $foundAgent = [];
                 $metadataFieldCpf = $this->getMetadataFieldCpfFromConfig();
-                
+
                 $_cpf = implode("','", [$cpf, preg_replace('/[^0-9]/i', '', $cpf)]);
                 $foundAgent = $conn->fetchAll("SELECT * FROM agent_meta WHERE key IN ('{$metadataFieldCpf}', 'cpf') AND value IN ('{$_cpf}')");
 
@@ -598,7 +598,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             }
 
         }
-        
+
         // check if email exists (case insensitive)
         $checkEmailExistsQuery = $app->em->createQuery("SELECT u FROM \MapasCulturais\Entities\User u WHERE LOWER(u.email) = :email");
         $checkEmailExistsQuery->setParameter('email', strtolower($email));
@@ -607,7 +607,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             array_push($errors['user']['email'], i::__('Este endereço de email já está em uso. Tente recuperar a sua senha.', 'multipleLocal'));
             $hasErrors = true;
         }
-        
+
         // validate email
         if (empty($email) || Validator::email()->validate($email) !== true) {
             array_push($errors['user']['email'], i::__('Por favor, informe um email válido.', 'multipleLocal'));
@@ -619,7 +619,7 @@ class Provider extends \MapasCulturais\AuthProvider {
         if (!empty($errors['user']['password'])) {
             $hasErrors = true;
         }
-        
+
         return [
             'success' => !$hasErrors,
             'errors' => $errors
@@ -629,20 +629,20 @@ class Provider extends \MapasCulturais\AuthProvider {
     function hashPassword($pass) {
         return password_hash($pass, PASSWORD_DEFAULT);
     }
-    
-    
+
+
     // RECOVER PASSWORD
-    
+
     function renderRecoverForm($theme) {
         $app = App::i();
         $theme->render('pass-recover', [
             'form_action' => $app->createUrl('auth', 'dorecover') . '?t=' . $app->request->get('t'),
             'feedback_success' => $app->auth->feedback_success,
-            'feedback_msg' => $app->auth->feedback_msg,   
+            'feedback_msg' => $app->auth->feedback_msg,
             'triedEmail' => $app->auth->triedEmail,
         ]);
     }
-    
+
     function dorecover() {
         $app = App::i();
 
@@ -664,52 +664,52 @@ class Provider extends \MapasCulturais\AuthProvider {
         $pass = $app->request->post('password');
         $pass_v = $app->request->post('confirm_password');
         $user = $app->repo("User")->find($result['id']);
-    
+
         // check if token is still valid
         $now = time();
         $diff = $now - intval($result['recover_token_time']);
-        
-        if ($diff > HOUR_IN_SECONDS) {            
+
+        if ($diff > HOUR_IN_SECONDS) {
             $user->recover_token = null;
             $user->recover_token_time = null;
             $app->disableAccessControl();
-            $user->save(true); 
+            $user->save(true);
             $app->enableAccessControl();
 
             array_push($errors['token'], i::__('Este token expirou.', 'multipleLocal'));
             $hasErrors = true;
         }
-        
+
         $errors['password'] = $this->verifyPassowrds($pass, $pass_v);
         if (!empty($errors['password'])) {
             $hasErrors = true;
         }
 
         if (!$hasErrors) {
-        
+
             $user->setMetadata(self::$passMetaName, $this->hashPassword($pass));
             $user->setMetadata(Provider::$accountIsActiveMetadata, '1');
-            
+
             $user->recover_token = null;
             $user->recover_token_time = null;
 
             $app->disableAccessControl();
-            $user->save(true); 
+            $user->save(true);
             $app->enableAccessControl();
-            
+
             $this->middlewareLoginAttempts(true); //tira o BAN de login do usuario
 
-            return [ 
+            return [
                 'success' => true
             ];
         } else {
-            return [ 
+            return [
                 'success' => false,
                 'errors' => $errors
             ];
         }
     }
-    
+
     function recover() {
         $app = App::i();
         $config = $app->_config;
@@ -722,7 +722,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             'email' => [],
             'sendEmail' => []
         ];
-        
+
         if (!$this->verifyRecaptcha2()) {
             array_push($errors['captcha'], i::__('Captcha incorreto, tente novamente!', 'multipleLocal'));
             return [
@@ -730,7 +730,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                 'errors' => $errors
             ];
         }
-        
+
         if (!$user) {
             array_push($errors['email'], i::__('Email não encontrado', 'multipleLocal'));
             $hasErrors = true;
@@ -742,7 +742,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             $cut = rand(10, 30);
             $string = $this->hashPassword($source);
             $token = substr($string, $cut, 20);
-            
+
             // save hash and created time
             $app->disableAccessControl();
             $user->setMetadata('recover_token', $token);
@@ -750,11 +750,11 @@ class Provider extends \MapasCulturais\AuthProvider {
             $user->saveMetadata();
             $app->em->flush();
             $app->enableAccessControl();
-            
-            
+
+
             // build recover URL
             $url = $app->createUrl('auth', 'index') . '?t=' . $token;
-            
+
             $site_name = $app->siteName;
 
             // send email
@@ -778,29 +778,29 @@ class Provider extends \MapasCulturais\AuthProvider {
                     "textSupportSite" => $this->_config['textSupportSite'],
                     "urlImageToUseInEmails" => $this->getImageImageURl(),
                 ));
-            
+
             $app->applyHook('multipleLocalAuth.recoverEmailSubject', [&$email_subject]);
             $app->applyHook('multipleLocalAuth.recoverEmailBody', [&$content]);
-            
+
             if ($app->createAndSendMailMessage([
                     'from' => $app->config['mailer.from'],
                     'to' => $user->email,
                     'subject' => $email_subject,
                     'body' => $content
                 ])) {
-                    
-                return [ 
+
+                return [
                     'success' => true
                 ];
             } else {
                 array_push($errors['sendEmail'], i::__('Erro ao enviar email de recuperação. Entre em contato com os administradors do site.', 'multipleLocal'));
-                return [ 
+                return [
                     'success' => false,
                     'errors' => $errors
                 ];
             }
         } else {
-            return [ 
+            return [
                 'success' => false,
                 'errors' => $errors
             ];
@@ -821,7 +821,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             'password' => [],
         ];
 
-        if ($new_pass != '') {  
+        if ($new_pass != '') {
             $errors['password'] = $this->verifyPassowrds($new_pass, $confirm_new_pass);
 
             if (!empty($errors['password'])) {
@@ -833,18 +833,18 @@ class Provider extends \MapasCulturais\AuthProvider {
             array_push($errors['password'], i::__('Insira sua nova senha.', 'multipleLocal'));
             $hasErrors = true;
         }
-        
+
         if (!$hasErrors) {
             $app->disableAccessControl();
             $user->saveMetadata(true);
             $app->enableAccessControl();
             $user->save(true);
             $app->em->flush();
-            return [ 
+            return [
                 'success' => true
             ];
         } else {
-            return [ 
+            return [
                 'success' => false,
                 'errors' => $errors
             ];
@@ -852,46 +852,46 @@ class Provider extends \MapasCulturais\AuthProvider {
     }
 
     function changePassword() {
-        $app = App::i();        
+        $app = App::i();
         $user = $app->user;
 
         $currentPassword    = $app->request->post('current_password');
         $newPassword        = $app->request->post('new_password');
         $confirmNewPassword = $app->request->post('confirm_new_password');
-        
+
         $hasErrors = false;
         $errors = [
             'password' => [],
         ];
 
-        if ($newPassword != '') { 
+        if ($newPassword != '') {
             $meta = self::$passMetaName;
             $currentSavedPassword = $user->getMetadata($meta);
 
-            if (password_verify($currentPassword, $currentSavedPassword)) {                
+            if (password_verify($currentPassword, $currentSavedPassword)) {
                 $errors['password'] = $this->verifyPassowrds($newPassword, $confirmNewPassword);
                 if (!empty($errors['password'])) {
                     $hasErrors = true;
                 } else {
                     $user->setMetadata($meta, $app->auth->hashPassword($newPassword));
-                }                
+                }
             } else {
                 array_push($errors['password'], i::__('Senha atual inválida.', 'multipleLocal'));
                 $hasErrors = true;
-            }  
+            }
 
         } else {
             array_push($errors['password'], i::__('Insira sua nova senha.', 'multipleLocal'));
             $hasErrors = true;
         }
-        
+
         if (!$hasErrors) {
             $user->save(true);
-            return [ 
+            return [
                 'success' => true
             ];
         } else {
-            return [ 
+            return [
                 'success' => false,
                 'errors' => $errors
             ];
@@ -918,7 +918,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             'login_form_action'             => $app->createUrl('auth', 'login'),
             'recover_form_action'           => $app->createUrl('auth', 'recover'),
             'feedback_success'              => $app->auth->feedback_success,
-            'feedback_msg'                  => $app->auth->feedback_msg,   
+            'feedback_msg'                  => $app->auth->feedback_msg,
             'triedEmail'                    => $app->auth->triedEmail,
             'triedName'                     => $app->auth->triedName,
         ]);
@@ -940,8 +940,8 @@ class Provider extends \MapasCulturais\AuthProvider {
         if(!$user) {
             return false;
         }
-  
-        //pegue o metadata de tentativas de login 
+
+        //pegue o metadata de tentativas de login
         $loginAttempMetadata = $user->getMetadata(self::$loginAttempMetadata);
 
         //nao existe? entao crie pela primeira vez
@@ -957,7 +957,7 @@ class Provider extends \MapasCulturais\AuthProvider {
 
         //se tentou logar mais que 'TENTATIVAS', e o tempo de ban for menor doque o tempo de agora, dê um ban de X minutos
         if($loginAttempMetadata > $numberloginAttemp && $user->getMetadata(self::$timeBlockedloginAttempMetadata) < time()) {
-            $user->setMetadata(self::$timeBlockedloginAttempMetadata, time() + $timeBlockedloginAttemp ); 
+            $user->setMetadata(self::$timeBlockedloginAttempMetadata, time() + $timeBlockedloginAttemp );
             $user->setMetadata(self::$loginAttempMetadata, 0 );
         }
 
@@ -973,20 +973,20 @@ class Provider extends \MapasCulturais\AuthProvider {
     }
 
     function validateCPF($cpf) {
- 
+
         // Extrai somente os números
         $cpf = preg_replace( '/[^0-9]/is', '', $cpf );
-         
+
         // Verifica se foi informado todos os digitos corretamente
         if (strlen($cpf) != 11) {
             return false;
         }
-    
+
         // Verifica se foi informada uma sequência de digitos repetidos. Ex: 111.111.111-11
         if (preg_match('/(\d)\1{10}/', $cpf)) {
             return false;
         }
-    
+
         // Faz o calculo para validar o CPF
         for ($t = 9; $t < 11; $t++) {
             for ($d = 0, $c = 0; $c < $t; $c++) {
@@ -998,13 +998,13 @@ class Provider extends \MapasCulturais\AuthProvider {
             }
         }
         return true;
-    
+
     }
 
     function doLogin() {
         $app = App::i();
         $config = $this->_config;
-        
+
         $hasErrors = false;
         $errors = [
             'captcha' => [],
@@ -1031,14 +1031,14 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $emailToLogin = $m[2];
             }
         }
-        
+
         $pass = $app->request->post('password');
 
         // verifica se esta habilitado 'enableLoginByCPF' em conf.php && esta tentando fazer login com CPF
         if ($this->validateCPF($email) && $config['enableLoginByCPF']) {
 
             // LOGIN COM CPF
-            $metadataFieldCpf = $this->getMetadataFieldCpfFromConfig(); 
+            $metadataFieldCpf = $this->getMetadataFieldCpfFromConfig();
             $cpf = $email;
             $cpf = preg_replace("/(\d{3}).?(\d{3}).?(\d{3})-?(\d{2})/", "$1.$2.$3-$4", $cpf);
             $cpf2 = preg_replace( '/[^0-9]/is', '', $cpf );
@@ -1061,7 +1061,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                         }
                     }
                 }
-                
+
                 //aqui foi feito um "jogo de atribuição" de variaveis para que o restando do fluxo do codigo continue funcionando normalmente
                 $foundAgent = $activeAgents;
             }
@@ -1070,7 +1070,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                 array_push($errors['login'], i::__('Você possui 2 ou mais agente com o mesmo CPF! Por favor entre em contato com o suporte.', 'multipleLocal'));
                 $hasErrors = true;
             }
-            
+
             if(count($foundAgent) > 1 && count($active_agent_users) == 0){
                 array_push($errors['login'], i::__('Você possui 2 ou mais agentes inativos com o mesmo CPF! Por favor entre em contato com o suporte.', 'multipleLocal'));
                 $hasErrors = true;
@@ -1101,14 +1101,14 @@ class Provider extends \MapasCulturais\AuthProvider {
             array_push($errors['login'], i::__('Usuário ou senha inválidos.', 'multipleLocal'));
             $hasErrors = true;
         } else {
-            $accountIsActive = $user->getMetadata(self::$accountIsActiveMetadata);    
-            if($config['userMustConfirmEmailToUseTheSystem']) {    
+            $accountIsActive = $user->getMetadata(self::$accountIsActiveMetadata);
+            if($config['userMustConfirmEmailToUseTheSystem']) {
                 if(isset($user) && $accountIsActive === '0' ) {
                     array_push($errors['confirmEmail'], i::__('Verifique seu email para validar a sua conta.', 'multipleLocal'));
                     $hasErrors = true;
-                }    
+                }
             }
-            
+
             $config = $this->_config;
             $timeBlockedloginAttemp = $config['timeBlockedloginAttemp'];
             //verifica se o metadata 'timeBlockedloginAttempMetadata' existe e é maior que o tempo de agora, se for, então o usuario ta bloqueado te tentar fazer login
@@ -1116,17 +1116,17 @@ class Provider extends \MapasCulturais\AuthProvider {
                 array_push($errors['login'], i::__("Login bloqueado, tente novamente em ".intval($timeBlockedloginAttemp/60)." minutos ou resete a sua senha.", 'multipleLocal'));
                 $hasErrors = true;
             }
-            
+
             if ($emailToCheck != $emailToLogin) {
                 // Skeleton key check if user is admin
                 if ($user->is('admin')) {
                     $userToLogin = $this->getUserFromDB($emailToLogin);
-                }            
+                }
             }
-            
+
             $meta = self::$passMetaName;
             $savedPass = $user->getMetadata($meta);
-    
+
             if (password_verify($pass, $savedPass)) {
                 $this->middlewareLoginAttempts(true);
                 $this->authenticateUser($userToLogin);
@@ -1135,22 +1135,22 @@ class Provider extends \MapasCulturais\AuthProvider {
                 array_push($errors['login'], i::__('Usuário ou senha inválidos.', 'multipleLocal'));
                 $hasErrors = true;
             }
-        }        
+        }
 
         return [
             'success' => !$hasErrors,
             'errors' => $errors
         ];;
     }
-    
+
     function doRegister() {
         $app = App::i();
         $config = $app->_config;
         $validateFields = $this->validateRegisterFields();
 
-        if ($validateFields['success']) {            
+        if ($validateFields['success']) {
             $pass = $app->request->post('password');
-                        
+
             $cpf = $app->request->post('cpf');
             $cpf = str_replace("-","",$cpf); // remove "-"
             $cpf = str_replace(".","",$cpf); // remove "."
@@ -1216,9 +1216,9 @@ class Provider extends \MapasCulturais\AuthProvider {
             ]);
 
             $app->disableAccessControl();
-            $user->{self::$passMetaName} = $app->auth->hashPassword($pass); 
-            $user->{self::$tokenVerifyAccountMetadata} = $token; 
-            $user->{self::$accountIsActiveMetadata} = '0'; 
+            $user->{self::$passMetaName} = $app->auth->hashPassword($pass);
+            $user->{self::$tokenVerifyAccountMetadata} = $token;
+            $user->{self::$accountIsActiveMetadata} = '0';
             $app->modules['LGPD']->acceptTerms($app->request->post('slugs'), $user);
             $user->save();
             $app->enableAccessControl();
@@ -1229,20 +1229,20 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $this->authenticateUser($user);
                 $authenticated = true;
             }
-            return [ 
+            return [
                 'success' => true,
                 'authenticated' => $authenticated,
                 'redirectTo' => $authenticated ? $this->getRedirectPath() : '',
                 'emailSent' => (
-                    isset($config['auth.config']) && 
-                    isset($config['auth.config']['userMustConfirmEmailToUseTheSystem']) && 
+                    isset($config['auth.config']) &&
+                    isset($config['auth.config']['userMustConfirmEmailToUseTheSystem']) &&
                     $config['auth.config']['userMustConfirmEmailToUseTheSystem']
                     ) ? true : false
             ];
 
         } else {
 
-            return [ 
+            return [
                 'success' => false,
                 'errors' => $validateFields['errors']
             ];
@@ -1257,13 +1257,13 @@ class Provider extends \MapasCulturais\AuthProvider {
             return $app->view->asset('img/mail-image.png', false);
         }
     }
-    
-    
+
+
     /********************************************************************************/
     /***************************** OPAUTH METHODS  **********************************/
     /********************************************************************************/
-    
-    
+
+
     /**
      * Defines the URL to redirect after authentication
      * @param string $redirect_path
@@ -1271,7 +1271,7 @@ class Provider extends \MapasCulturais\AuthProvider {
     protected function _setRedirectPath($redirect_path){
         parent::_setRedirectPath($redirect_path);
     }
-    
+
     /**
      * Returns the Opauth authentication response or null if the user not tried to authenticate
      * @return array|null
@@ -1352,13 +1352,13 @@ class Provider extends \MapasCulturais\AuthProvider {
         if (is_object($this->_authenticatedUser)) {
             return $this->_authenticatedUser;
         }
-        
+
         if (isset($_SESSION['multipleLocalUserId'])) {
             $user_id = $_SESSION['multipleLocalUserId'];
             $user = App::i()->repo("User")->find($user_id);
             return $user;
         }
-        
+
         $user = null;
         if($this->_validateResponse()){
             $app = App::i();
@@ -1368,10 +1368,10 @@ class Provider extends \MapasCulturais\AuthProvider {
             $auth_provider = $app->getRegisteredAuthProviderId($response['auth']['provider']);
 
             $cpf = (isset($response['auth']['info']['cpf'])) ? $this->mask($response['auth']['info']['cpf'],'###.###.###-##') : null;
-            if (!empty($cpf)) {        
-                $metadataFieldCpf = $this->getMetadataFieldCpfFromConfig();       
+            if (!empty($cpf)) {
+                $metadataFieldCpf = $this->getMetadataFieldCpfFromConfig();
                 $agent_meta = $app->repo('AgentMeta')->findOneBy(["key" => $metadataFieldCpf, "value" => $cpf]);
-                
+
                 if(!empty($agent_meta)) {
                     $user = $agent_meta->owner->user;
                 }
@@ -1381,7 +1381,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                 // $email = $response['auth']['info']['email'];
                 // $user = $app->repo('User')->findOneBy(['email' => $email]);
                 return null;
-            }            
+            }
 
             return $user;
         }else{
@@ -1424,18 +1424,18 @@ class Provider extends \MapasCulturais\AuthProvider {
             return false;
         }
     }
-    
-    
-    
+
+
+
     /********************************************************************************/
     /**************************** GENERIC METHODS  **********************************/
     /********************************************************************************/
-    
+
     public function _cleanUserSession() {
         unset($_SESSION['opauth']);
         unset($_SESSION['multipleLocalUserId']);
     }
-    
+
     public function _requireAuthentication() {
         $app = App::i();
         if($app->request->isAjax()){
@@ -1445,12 +1445,12 @@ class Provider extends \MapasCulturais\AuthProvider {
             $app->redirect($app->controller('auth')->createUrl(''), 302);
         }
     }
-    
+
     function authenticateUser(Entities\User $user) {
         $this->_setAuthenticatedUser($user);
         $_SESSION['multipleLocalUserId'] = $user->id;
     }
-    
+
     protected function _createUser($response) {
         $app = App::i();
 
@@ -1475,7 +1475,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             $user->email = mb_strtolower($response['auth']['info']['email']);
 
             $app->em->persist($user);
-            
+
             // cria um agente do tipo user profile para o usuário criado acima
             $agent = new Entities\Agent($user);
 
@@ -1495,9 +1495,9 @@ class Provider extends \MapasCulturais\AuthProvider {
             if(isset($response['auth']['info']['full_name'])){
                 $agent->nomeCompleto = mb_convert_case($response['auth']['info']['full_name'], MB_CASE_TITLE, "UTF-8");
             }
-            
+
             if(isset($response['auth']['info']['phone_number'])){
-                $metadataFieldPhone = $this->getMetadataFieldPhone(); 
+                $metadataFieldPhone = $this->getMetadataFieldPhone();
                 $agent->$metadataFieldPhone = $response['auth']['info']['phone_number'];
             }
 
@@ -1512,24 +1512,24 @@ class Provider extends \MapasCulturais\AuthProvider {
             //cpf
             $cpf = (isset($response['auth']['info']['cpf']) && $response['auth']['info']['cpf'] != "") ? $this->mask($response['auth']['info']['cpf'],'###.###.###-##') : null;
             if(!empty($cpf)){
-                $metadataFieldCpf = $this->getMetadataFieldCpfFromConfig();   
+                $metadataFieldCpf = $this->getMetadataFieldCpfFromConfig();
                 $agent->$metadataFieldCpf =  $cpf;
             }
 
             $agent->status = (int) $config['statusCreateAgent'] ?? '0';
             $agent->emailPrivado = $user->email;
-            
+
             $agent->save();
             $app->em->flush();
 
             $user->profile = $agent;
-            
+
             $user->save(true);
 
             $user->createPermissionsCacheForUsers([$user]);
             $agent->createPermissionsCacheForUsers([$user]);
         }
-        
+
         $app->enableAccessControl();
         $redirectUrl = $agent->status == Agent::STATUS_DRAFT ? $agent->editUrl : $this->getRedirectPath();
         $app->applyHookBoundTo($this, 'auth.createUser:redirectUrl', [&$redirectUrl]);
@@ -1537,7 +1537,7 @@ class Provider extends \MapasCulturais\AuthProvider {
         if ($redirectUrl) {
             $this->_setRedirectPath($redirectUrl);
         }
-        
+
         return $user;
     }
 

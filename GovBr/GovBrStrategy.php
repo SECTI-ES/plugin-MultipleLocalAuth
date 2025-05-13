@@ -46,7 +46,7 @@ class GovBrStrategy extends OpauthStrategy
 		foreach ($this->optionals as $key) {
 			if (!empty($this->strategy[$key])) $params[$key] = $this->strategy[$key];
 		}
-		
+
 		$this->clientGet($url, $params);
 	}
 
@@ -72,9 +72,9 @@ class GovBrStrategy extends OpauthStrategy
 		// }
 
 		if ((array_key_exists('code', $_GET) && !empty($_GET['code'])) && (array_key_exists("state", $_GET) && $_GET['state'] == $_SESSION['govbr-state'])) {
-			
+
 			$code = $_GET['code'];
-		
+
 			$url = $this->strategy['token_endpoint'];
 			$params = array(
 				'grant_type' => 'authorization_code',
@@ -84,10 +84,10 @@ class GovBrStrategy extends OpauthStrategy
 			);
 
 			$token = base64_encode("{$this->strategy['client_id']}:{$this->strategy['client_secret']}");
-			
+
 			// imprime URL de requisicao para conferencia do POST - Passo 6 - https://acesso.gov.br/roteiro-tecnico/iniciarintegracao.html
 			$app = App::i();
-			
+
 			$attempts = 5;
 			do {
 				if(isset($app->config['app.log.auth']) && $app->config['app.log.auth']) {
@@ -129,7 +129,7 @@ class GovBrStrategy extends OpauthStrategy
 				$userinfo->cpf =  $userinfo->sub;
 
 				$exp_name = explode(" ", $userinfo->name);
-			
+
 				$info = [
 					'name' => $exp_name[0],
 					'cpf' => $userinfo->sub,
@@ -138,7 +138,7 @@ class GovBrStrategy extends OpauthStrategy
 					'full_name' => $userinfo->name,
 					'dic_agent_fields_update' => $this->strategy['dic_agent_fields_update']
 				];
-				
+
 				$this->auth = array(
 					'uid' => $userinfo->jti,
 					'credentials' => array(
@@ -148,8 +148,8 @@ class GovBrStrategy extends OpauthStrategy
 					'raw' => $userinfo,
 					'info' => $info,
 					'applySeal' => $this->strategy['applySealId']
-				);		
-			
+				);
+
 				$this->callback();
 			} else {
 				$error = array(
@@ -172,7 +172,7 @@ class GovBrStrategy extends OpauthStrategy
 	}
 
 	/**
-	 * @param string $id_token 
+	 * @param string $id_token
 	 * @return array Parsed JSON results
 	 */
 	private function userinfo($id_token)
@@ -205,7 +205,7 @@ class GovBrStrategy extends OpauthStrategy
 		if(mb_strpos($response, 'não encontrada')){
 			return;
 		}
-		
+
 		$tmp = tempnam("/tmp", "");
 		$handle = fopen($tmp, "wb");
 		fwrite($handle,$response);
@@ -239,7 +239,7 @@ class GovBrStrategy extends OpauthStrategy
 		$user = null;
 		$cpf = self::mask($response['auth']['info']['cpf'],'###.###.###-##');
 		$metadataFieldCpf = env('AUTH_METADATA_FIELD_DOCUMENT', 'documento');
-		
+
 		$agent_meta = null;
 		if($am = $app->repo('AgentMeta')->findOneBy(["key" => $metadataFieldCpf, "value" => $cpf])){
 			$agent_meta = $am;
@@ -258,7 +258,7 @@ class GovBrStrategy extends OpauthStrategy
 				$user->authProvider = $response['auth']['provider'];
 				$user->authUid = $response['auth']['uid'];
 				$user->email = $response['auth']['info']['email'];
-	
+
 				$app->em->persist($user);
 
 				$agent->userId = $user->id;
@@ -300,7 +300,7 @@ class GovBrStrategy extends OpauthStrategy
 			if(!$has_new_seal){
 				$agent->createSealRelation($seal);
 			}
-			
+
 			$app->enableAccessControl();
 
 		}
@@ -323,7 +323,7 @@ class GovBrStrategy extends OpauthStrategy
 			$fieladsUnlocked = array_keys($config['dic_agent_fields_update']);
 			$lockedFields = array_diff($lockedFields, $fieladsUnlocked);
 		});
-		
+
 		$app->disableAccessControl();
 		foreach($auth_data['dic_agent_fields_update'] as $entity_key => $ref){
 			if(!($user->profile->$entity_key) && $user->profile->$entity_key != $auth_data[$ref]){
@@ -337,13 +337,13 @@ class GovBrStrategy extends OpauthStrategy
 		$app->enableAccessControl();
 
 		if($allAgents = $app->repo("Agent")->findBy(['userId' => $user->id, '_type' => 1])){
-			
+
 			if(count($allAgents) == 1){
 				$_agent = $allAgents[0];
 				$_agent->setAsUserProfile();
 			}
 		}
-		
+
 		self::getFile($user->profile, $userinfo->picture, $userinfo->access_token);
 	}
 
