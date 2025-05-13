@@ -252,25 +252,25 @@ class GovBrStrategy extends OpauthStrategy
 			$agent = $agent_meta->owner;
 			$user = $agent->user;
 
-			if(!$agent->isUserProfile){
+			// if(!$agent->isUserProfile){
 
-				$user = new Entities\User;
-				$user->authProvider = $response['auth']['provider'];
-				$user->authUid = $response['auth']['uid'];
-				$user->email = $response['auth']['info']['email'];
+			// 	$user = new Entities\User;
+			// 	$user->authProvider = $response['auth']['provider'];
+			// 	$user->authUid = $response['auth']['uid'];
+			// 	$user->email = $response['auth']['info']['email'];
 
-				$app->em->persist($user);
+			// 	$app->em->persist($user);
 
-				$agent->userId = $user->id;
-				$agent->save(true);
-				$agent->refresh();
+			// 	$agent->userId = $user->id;
+			// 	$agent->save(true);
+			// 	$agent->refresh();
 
-				$user->profile = $agent;
-				$user->save(true);
+			// 	$user->profile = $agent;
+			// 	$user->save(true);
 
-				$user->createPermissionsCacheForUsers([$user]);
-            	$agent->createPermissionsCacheForUsers([$user]);
-			}
+			// 	$user->createPermissionsCacheForUsers([$user]);
+            // 	$agent->createPermissionsCacheForUsers([$user]);
+			// }
 		}
 
 		return $user;
