@@ -1,11 +1,12 @@
 <?php
 namespace MultipleLocalAuth;
-use MapasCulturais\App;
-use MapasCulturais\Entities;
-use MapasCulturais\Entities\Agent;
+use Exception;
 use MapasCulturais\i;
 use Mustache\Mustache;
+use MapasCulturais\App;
+use MapasCulturais\Entities;
 use Respect\Validation\Validator;
+use MapasCulturais\Entities\Agent;
 
 class Provider extends \MapasCulturais\AuthProvider {
     protected $opauth;
@@ -111,6 +112,17 @@ class Provider extends \MapasCulturais\AuthProvider {
                     'applySealId' => env('AUTH_GOV_BR_APPLY_SEAL_ID', null),
                     'menssagem_authenticated' => env('AUTH_GOV_BR_MENSSAGEM_AUTHENTICATED','Usuario ja se autenticou pelo GovBr'),
                     'dic_agent_fields_update' => env('AUTH_GOV_BR_DICT_AGENT_FIELDS_UPDATE','[]')
+                ],
+                'decidim' => [
+                    'visible' => env('AUTH_DECIDIM_CLIENT_ID', false),
+                    'client_id' => env('AUTH_DECIDIM_CLIENT_ID', null),
+                    'client_secret' => env('AUTH_DECIDIM_CLIENT_SECRET', null),
+                    'redirect_uri' => env('AUTH_DECIDIM_REDIRECT_URI', null),
+                    'scope' => env('AUTH_DECIDIM_SCOPE', null),
+                    'auth_endpoint' => env('AUTH_DECIDIM_AUTH_ENDPOINT', null),
+                    'token_endpoint' => env('AUTH_DECIDIM_TOKEN_ENDPOINT', null),
+                    'userinfo_endpoint' => env('AUTH_DECIDIM_USERINFO_ENDPOINT', null),
+                    'button_text' => env('AUTH_DECIDIM_BUTTON_TEXT', 'Entrar com Decidim'),
                 ],
                 'AcessoCidadaoES' => [
                     'visible' => env('AUTH_ACESSO_CIDADAO_ES_ID', false),
@@ -356,6 +368,8 @@ class Provider extends \MapasCulturais\AuthProvider {
             $login = $app->auth->doLogin();
 
             if ($login['success']) {
+                $app->applyHook('auth.successful');
+
                 $this->json([
                     'error' => false,
                     'redirectTo' => $app->auth->getRedirectPath()
@@ -1186,6 +1200,15 @@ class Provider extends \MapasCulturais\AuthProvider {
 
             $baseUrl = $app->getBaseUrl();
 
+            if(!$user) {
+                $error['user']['createUser'] = i::__('Não foi possível criar o usuário. Entre em contato com suporte', 'multipleLocal');
+
+                return [
+                    'success' => false,
+                    'errors' => $error
+                ];
+            }
+
             //ATENÇÃO !! Se for necessario "padronizar" os emails com header/footers, é necessario adapatar o 'mustache', e criar uma mini estrutura de pasta de emails em 'MultipleLocalAuth\views'
             $mustache = new \Mustache_Engine();
             $site_name = $app->siteName;
@@ -1220,7 +1243,8 @@ class Provider extends \MapasCulturais\AuthProvider {
             $user->{self::$tokenVerifyAccountMetadata} = $token;
             $user->{self::$accountIsActiveMetadata} = '0';
             $app->modules['LGPD']->acceptTerms($app->request->post('slugs'), $user);
-            $user->save();
+            $user->save(true);
+
             $app->enableAccessControl();
 
 
@@ -1454,20 +1478,28 @@ class Provider extends \MapasCulturais\AuthProvider {
     protected function _createUser($response) {
         $app = App::i();
 
+        /** @var \MapasCulturais\Connection $conn */
+        $conn = $app->em->getConnection();
+
         $app->disableAccessControl();
 
         $config = $this->_config;
 
         $user = null;
-        if($provider_class = $response['auth']['provider']."Strategy"){
-            if(method_exists($provider_class, "newAccountCheck")){
-                if($user = $provider_class::newAccountCheck($response)){
+        if ($provider_class = $response['auth']['provider'] . "Strategy") {
+            if (method_exists($provider_class, "newAccountCheck")) {
+                if ($user = $provider_class::newAccountCheck($response)) {
                     $agent = $user->profile;
                 }
             }
         }
 
-        if(!$user){
+        if ($user) {
+            return $user;
+        }
+
+        try {
+            $app->em->beginTransaction();
             // cria o usuário
             $user = new Entities\User;
             $user->authProvider = $response['auth']['provider'];
@@ -1475,6 +1507,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             $user->email = mb_strtolower($response['auth']['info']['email']);
 
             $app->em->persist($user);
+
 
             // cria um agente do tipo user profile para o usuário criado acima
             $agent = new Entities\Agent($user);
@@ -1492,10 +1525,6 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $agent->name = '';
             }
 
-            if(isset($response['auth']['info']['full_name'])){
-                $agent->nomeCompleto = mb_convert_case($response['auth']['info']['full_name'], MB_CASE_TITLE, "UTF-8");
-            }
-
             if(isset($response['auth']['info']['phone_number'])){
                 $metadataFieldPhone = $this->getMetadataFieldPhone();
                 $agent->$metadataFieldPhone = $response['auth']['info']['phone_number'];
@@ -1505,8 +1534,13 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $agent->shortDescription = ucfirst(strtolower($response['auth']['agentData']['shortDescription']));
             }
 
-            if(isset($response['auth']['agentData']['terms:area'])){
+            if (isset($response['auth']['agentData']['terms:area'])) {
                 $agent->terms['area']  = $response['auth']['agentData']['terms:area'];
+            }
+
+            if(isset($response['auth']['info']['phone_number'])){
+                $metadataFieldPhone = $this->getMetadataFieldPhone();
+                $agent->setMetadata($metadataFieldPhone, $response['auth']['info']['phone_number']);
             }
 
             //cpf
@@ -1525,6 +1559,10 @@ class Provider extends \MapasCulturais\AuthProvider {
             $user->profile = $agent;
 
             $user->save(true);
+
+            if(!$conn->fetchScalar("SELECT profile_id FROM usr where id = {$user->id}")) {
+                throw new Exception("Error create agent");
+            }
 
             $user->createPermissionsCacheForUsers([$user]);
             $agent->createPermissionsCacheForUsers([$user]);
