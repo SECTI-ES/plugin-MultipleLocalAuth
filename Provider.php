@@ -110,7 +110,7 @@ class Provider extends \MapasCulturais\AuthProvider {
                     'userinfo_endpoint' => env('AUTH_GOV_BR_USERINFO_ENDPOINT', null),
                     'state_salt' => env('AUTH_GOV_BR_STATE_SALT', null),
                     'applySealId' => env('AUTH_GOV_BR_APPLY_SEAL_ID', null),
-                    'menssagem_authenticated' => env('AUTH_GOV_BR_MENSSAGEM_AUTHENTICATED','Usuario ja se autenticou pelo GovBr'),
+                    'menssagem_authenticated' => env('AUTH_GOV_BR_MENSSAGEM_AUTHENTICATED','Usuário já se autenticou pelo GovBr'),
                     'dic_agent_fields_update' => env('AUTH_GOV_BR_DICT_AGENT_FIELDS_UPDATE','[]')
                 ],
                 'decidim' => [
@@ -1057,7 +1057,6 @@ class Provider extends \MapasCulturais\AuthProvider {
             $cpf = preg_replace("/(\d{3}).?(\d{3}).?(\d{3})-?(\d{2})/", "$1.$2.$3-$4", $cpf);
             $cpf2 = preg_replace( '/[^0-9]/is', '', $cpf );
             $foundAgent = $app->repo("AgentMeta")->findBy(['key' => $metadataFieldCpf, 'value' => [$cpf,$cpf2]]);
-
             if(!$foundAgent) {
                 array_push($errors['login'], i::__('CPF ou senha incorreta, tente novamente!', 'multipleLocal'));
                 $hasErrors = true;
@@ -1475,7 +1474,8 @@ class Provider extends \MapasCulturais\AuthProvider {
         $_SESSION['multipleLocalUserId'] = $user->id;
     }
 
-    protected function _createUser($response) {
+    protected function _createUser($response)
+    {
         $app = App::i();
 
         /** @var \MapasCulturais\Connection $conn */
@@ -1508,7 +1508,6 @@ class Provider extends \MapasCulturais\AuthProvider {
 
             $app->em->persist($user);
 
-
             // cria um agente do tipo user profile para o usuário criado acima
             $agent = new Entities\Agent($user);
 
@@ -1538,14 +1537,14 @@ class Provider extends \MapasCulturais\AuthProvider {
                 $agent->terms['area']  = $response['auth']['agentData']['terms:area'];
             }
 
-            if(isset($response['auth']['info']['phone_number'])){
+            if (isset($response['auth']['info']['phone_number'])) {
                 $metadataFieldPhone = $this->getMetadataFieldPhone();
                 $agent->setMetadata($metadataFieldPhone, $response['auth']['info']['phone_number']);
             }
 
             //cpf
-            $cpf = (isset($response['auth']['info']['cpf']) && $response['auth']['info']['cpf'] != "") ? $this->mask($response['auth']['info']['cpf'],'###.###.###-##') : null;
-            if(!empty($cpf)){
+            $cpf = (isset($response['auth']['info']['cpf']) && $response['auth']['info']['cpf'] != "") ? $this->mask($response['auth']['info']['cpf'], '###.###.###-##') : null;
+            if (!empty($cpf)) {
                 $metadataFieldCpf = $this->getMetadataFieldCpfFromConfig();
                 $agent->$metadataFieldCpf =  $cpf;
             }
@@ -1553,7 +1552,7 @@ class Provider extends \MapasCulturais\AuthProvider {
             $agent->status = (int) $config['statusCreateAgent'] ?? '0';
             $agent->emailPrivado = $user->email;
 
-            $agent->save();
+            $agent->save(true);
             $app->em->flush();
 
             $user->profile = $agent;
@@ -1566,17 +1565,23 @@ class Provider extends \MapasCulturais\AuthProvider {
 
             $user->createPermissionsCacheForUsers([$user]);
             $agent->createPermissionsCacheForUsers([$user]);
+
+            $app->em->commit();
+
+            $app->enableAccessControl();
+            $redirectUrl = $agent->status == Agent::STATUS_DRAFT ? $agent->editUrl : $this->getRedirectPath();
+            $app->applyHookBoundTo($this, 'auth.createUser:redirectUrl', [&$redirectUrl]);
+
+            if ($redirectUrl) {
+                $this->_setRedirectPath($redirectUrl);
+            }
+
+            return $user;
+
+        } catch (\Throwable $th) {
+            $app->em->rollback();
+            return null;
         }
-
-        $app->enableAccessControl();
-        $redirectUrl = $agent->status == Agent::STATUS_DRAFT ? $agent->editUrl : $this->getRedirectPath();
-        $app->applyHookBoundTo($this, 'auth.createUser:redirectUrl', [&$redirectUrl]);
-
-        if ($redirectUrl) {
-            $this->_setRedirectPath($redirectUrl);
-        }
-
-        return $user;
     }
 
     function mask($val, $mask) {
